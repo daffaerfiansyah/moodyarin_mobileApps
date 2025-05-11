@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:moodyarin/routes/routes.dart';
 
 
 class SplashScreen extends StatefulWidget {
@@ -33,16 +34,16 @@ class _SplashScreenState extends State<SplashScreen> {
               const Spacer(),
               AnimatedOpacity(
                 opacity: isDraggingComplete ? 0.0 : 1.0,
-                duration: const Duration(milliseconds: 600),
+                duration: const Duration(milliseconds: 700),
                 child: AnimatedSlide(
                   offset:
                       isDraggingComplete ? const Offset(0, -1.5) : Offset.zero,
-                  duration: const Duration(milliseconds: 600),
+                  duration: const Duration(milliseconds: 700),
                   child: Column(
                     children: [
                       Image.asset('assets/Logo.png', width: 150),
                       const SizedBox(height: 16),
-                      Image.asset('assets/Text_Logo.png', width: 150),
+                      Image.asset('assets/Text_Logo.png', width: 300),
                     ],
                   ),
                 ),
@@ -50,7 +51,6 @@ class _SplashScreenState extends State<SplashScreen> {
               const Spacer(),
               Stack(
                 children: [
-                  // Background container dengan gradient dan shadow
                   Container(
                     width: screenWidth,
                     height: 60,
@@ -103,8 +103,11 @@ class _SplashScreenState extends State<SplashScreen> {
                       onHorizontalDragEnd: (details) {
                         if (dragValue > screenWidth * 0.6) {
                           setState(() => isDraggingComplete = true);
-                          Future.delayed(const Duration(milliseconds: 700), () {
-                            Navigator.pushReplacementNamed(context, '/home');
+                          Future.delayed(const Duration(milliseconds: 600), () {
+                            Navigator.pushReplacementNamed(
+                              context,
+                              AppRoutes.welcome,
+                            );
                           });
                         } else {
                           setState(() {

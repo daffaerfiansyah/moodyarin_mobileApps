@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:moodyarin/pages/splash_screen.dart';
+import 'package:moodyarin/routes/routes.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,11 +11,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const SplashScreen(),
+      title: 'MoodyarIn',
+      debugShowCheckedModeBanner: false,
+      initialRoute: AppRoutes.splash,
+      onGenerateRoute: AppRoutes.generateRoute,
     );
   }
 }
