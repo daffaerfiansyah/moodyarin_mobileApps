@@ -38,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: AnimatedSlide(
                   offset:
                       isDraggingComplete ? const Offset(0, -1.5) : Offset.zero,
-                  duration: const Duration(milliseconds: 700),
+                  duration: const Duration(milliseconds: 600),
                   child: Column(
                     children: [
                       Image.asset('assets/Logo.png', width: 150),
