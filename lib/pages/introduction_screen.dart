@@ -97,7 +97,7 @@ class IntroductionScreen extends StatelessWidget {
                           ),
                         ),
                         onPressed: () {
-                          Navigator.pushNamed(context, '/dashboard');
+                          Navigator.pushNamed(context, '/login');
                         },
                         child: const Text(
                           'Lanjut',
