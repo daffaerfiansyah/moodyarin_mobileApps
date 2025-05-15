@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:another_flushbar/flushbar.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:moodyarin/auth/service_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -9,7 +11,79 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _authService = AuthService();
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  void _showCustomSnackbar(String message, {bool isError = true}) {
+    Flushbar(
+      margin: const EdgeInsets.all(16),
+      borderRadius: BorderRadius.circular(12),
+      backgroundColor: isError ? Colors.red.shade400 : Colors.green.shade300,
+      flushbarPosition: FlushbarPosition.TOP,
+      icon: const Icon(Icons.close, color: Colors.white),
+      duration: const Duration(seconds: 3),
+      messageText: Text(
+        message,
+        style: const TextStyle(color: Colors.white, fontSize: 14),
+      ),
+    ).show(context);
+  }
+
+
+  void _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showCustomSnackbar('Email dan password wajib diisi.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await _authService.signIn(email, password);
+
+      // Jika login sukses
+      if (response.session != null && response.user != null) {
+        _showCustomSnackbar('Login berhasil!', isError: false);
+
+        await Future.delayed(
+          const Duration(seconds: 2),
+        ); // beri waktu snackbar muncul
+
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/dashboard',
+            (_) => false,
+          );
+        }
+      } else {
+        // Jika session atau user null, berarti login gagal
+        _showCustomSnackbar('Email atau password salah.');
+      }
+    } catch (e) {
+      // Tangani jika ada exception dari Supabase
+      _showCustomSnackbar('Gagal login: ${e.toString()}');
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   // Email
                   TextFormField(
+                    controller: _emailController,
                     decoration: InputDecoration(
                       hintText: 'Email',
                       prefixIcon: const Icon(Icons.email_outlined),
@@ -80,6 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Password dengan toggle visibility
                   TextFormField(
+                    controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       hintText: 'Password',
@@ -128,13 +204,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      onPressed: () {
-                        // Aksi login
-                      },
-                      child: const Text(
-                        'Masuk',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
+                      onPressed: _isLoading ? null : _login,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                          : const Text(
+                              'Masuk',
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 16),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 16),

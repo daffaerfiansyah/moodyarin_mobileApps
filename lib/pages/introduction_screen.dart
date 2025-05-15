@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moodyarin/utils/backhandle_wrapper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class IntroductionScreen extends StatelessWidget {
   const IntroductionScreen({super.key});
@@ -96,8 +98,13 @@ class IntroductionScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/login');
+                        onPressed: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool(
+                            'is_first_open',
+                            false,
+                          ); // tandai sudah pernah buka
+                          Navigator.pushReplacementNamed(context, '/login');
                         },
                         child: const Text(
                           'Lanjut',

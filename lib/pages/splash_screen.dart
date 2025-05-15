@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moodyarin/routes/routes.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -13,12 +14,26 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   double dragValue = 0.0;
   bool isDraggingComplete = false;
-
+  String _shouldGoTo = AppRoutes.welcome; // default
 
   @override
   void initState() {
     super.initState();
+    _checkUserStatus();
   }
+
+  Future<void> _checkUserStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final isFirstOpen = prefs.getBool('is_first_open') ?? true;
+    final session = Supabase.instance.client.auth.currentSession;
+
+    // Simpan ke state supaya bisa digunakan setelah geser
+    setState(() {
+      _shouldGoTo = session != null ? AppRoutes.login : isFirstOpen ? AppRoutes.welcome : AppRoutes.login;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +121,7 @@ class _SplashScreenState extends State<SplashScreen> {
                           Future.delayed(const Duration(milliseconds: 600), () {
                             Navigator.pushReplacementNamed(
                               context,
-                              AppRoutes.welcome,
+                              _shouldGoTo,
                             );
                           });
                         } else {

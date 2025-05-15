@@ -1,66 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:moodyarin/routes/routes.dart';
+import 'package:moodyarin/constant.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+
+  final prefs = await SharedPreferences.getInstance();
+  final isFirstTime = prefs.getBool('is_first_open') ?? true;
+
+  final session = Supabase.instance.client.auth.currentSession;
+  final isLoggedIn = session != null;
+
+  String initialRoute;
+  if (isFirstTime) {
+    initialRoute = AppRoutes.splash; 
+  } else {
+    initialRoute = isLoggedIn ? AppRoutes.splash : AppRoutes.login;
+  }
+
+  runApp(MyApp(initialRoute: initialRoute));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String initialRoute;
+
+  const MyApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MoodyarIn',
       debugShowCheckedModeBanner: false,
-      initialRoute: AppRoutes.splash,
+      initialRoute: initialRoute,
       onGenerateRoute: AppRoutes.generateRoute,
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }
