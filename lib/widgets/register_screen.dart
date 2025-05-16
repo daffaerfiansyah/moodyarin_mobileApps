@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:moodyarin/auth/service_auth.dart';
 import 'package:another_flushbar/flushbar.dart';
 
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -17,7 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
-  
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
@@ -31,23 +32,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void showTopSnackbar(String message, {bool isError = true}) {
     Flushbar(
-      messageText: const Text(
-        'Registrasi berhasil! Silakan login.',
-        style: TextStyle(color: Colors.white, fontSize: 14),
+      messageText: Text(
+        message,
+        style: const TextStyle(color: Colors.white, fontSize: 14),
       ),
-      backgroundColor: Colors.green.shade600,
-      icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+      backgroundColor: isError ? Colors.red.shade400 : Colors.green.shade600,
+      icon: const Icon(Icons.info_outline, color: Colors.white),
       borderRadius: BorderRadius.circular(12),
       margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 3),
       flushbarPosition: FlushbarPosition.TOP,
-    ).show(context).then((_) {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-    });
-
+    ).show(context);
   }
+
 
 
   Future<void> registerUser(
@@ -64,30 +61,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final user = response.user;
       if (user != null) {
         // Simpan nama ke tabel users
-        final insertResponse = await Supabase.instance.client
-            .from('users')
-            .insert({'id': user.id, 'full_name': fullName, 'email': email});
-
-        if (insertResponse.error != null) {
-          showTopSnackbar('Gagal menyimpan data pengguna.');
-          return;
-        }
-
-        // Navigasi ke home / tampilkan pesan sukses
-        showTopSnackbar('Registrasi berhasil! Silakan login.', isError: false);
-
-        Future.delayed(const Duration(milliseconds: 800), () {
-          Navigator.pushReplacementNamed(context, '/login');
+        await Supabase.instance.client.from('users').insert({
+          'id': user.id,
+          'full_name': fullName,
+          'email': email,
         });
+
+        if (mounted) {
+          Flushbar(
+            messageText: const Text(
+              'Registrasi berhasil! Silakan login.',
+              style: TextStyle(color: Colors.white, fontSize: 14),
+            ),
+            backgroundColor: Colors.green.shade600,
+            icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+            borderRadius: BorderRadius.circular(12),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 2),
+            flushbarPosition: FlushbarPosition.TOP,
+          ).show(context).then((_) {
+            Navigator.pushReplacementNamed(context, '/login');
+          });
+        }
       }
+    } on PostgrestException catch (e) {
+      print('Postgrest Error: ${e.message}');
+      showTopSnackbar('Gagal menyimpan data pengguna: ${e.message}');
     } catch (e) {
       print('Error saat registrasi: $e');
       showTopSnackbar('Terjadi kesalahan saat registrasi.');
     }
   }
 
-
-   @override
+  @override
   void dispose() {
     _namaController.dispose();
     _emailController.dispose();

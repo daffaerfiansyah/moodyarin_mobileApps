@@ -177,22 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-
-                  // Lupa password
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {},
-                      child: Text(
-                        'lupa password?',
-                        style: GoogleFonts.rubik(
-                          color: Colors.blue,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-
+                  const SizedBox(height: 10),
                   // Tombol Masuk
                   SizedBox(
                     width: double.infinity,
