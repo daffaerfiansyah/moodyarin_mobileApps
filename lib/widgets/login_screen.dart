@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           Navigator.pushNamedAndRemoveUntil(
             context,
-            '/dashboard',
+            '/home',
             (_) => false,
           );
         }
