@@ -52,6 +52,12 @@ flutter:
     - assets/IMG-06.png
     - assets/IMG-07.png
     - assets/IMG-08.png
+    - assets/IMG-09.png
+    - assets/Emoji-1.png
+    - assets/Emoji-2.png
+    - assets/Emoji-3.png
+    - assets/Emoji-4.png
+    - assets/Emoji-5.png
 
   fonts :
     - family: Raleway

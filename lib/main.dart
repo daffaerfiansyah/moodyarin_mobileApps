@@ -17,10 +17,12 @@ void main() async {
 
   String initialRoute;
   if (isFirstTime) {
-    initialRoute = AppRoutes.splash; 
+    await prefs.setBool('is_first_open', false);
+    initialRoute = AppRoutes.splash;
   } else {
-    initialRoute = isLoggedIn ? AppRoutes.splash : AppRoutes.login;
+    initialRoute = isLoggedIn ? AppRoutes.homepage : AppRoutes.login;
   }
+
 
   runApp(MyApp(initialRoute: initialRoute));
 }

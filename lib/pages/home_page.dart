@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:moodyarin/widgets/bottom_navigation.dart';
 import 'package:moodyarin/pages/entry_page.dart';
+import 'package:moodyarin/pages/mood_page.dart';
 // Tambahkan halaman lain jika sudah tersedia
 // import 'package:moodyarin/pages/statistik_page.dart';
-// import 'package:moodyarin/pages/mood_page.dart';
 // import 'package:moodyarin/pages/kalender_page.dart';
 // import 'package:moodyarin/pages/profil_page.dart';
 
@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = const [
     EntryPage(),
     Center(child: Text("Statistik")),
-    Center(child: Text("Mood Page")),
+    MoodPage(),
     Center(child: Text("Kalender")),
     Center(child: Text("Profil")),
   ];
@@ -44,21 +44,21 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: false, // ✅ Tidak naik saat keyboard
       body: _pages[_selectedIndex],
 
-      // ✅ Tombol Tengah Mengambang (Emoji)
+      // ✅ FAB tetap pakai bawaan Scaffold
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _onNavTapped(2), // index ke-2 untuk tombol tengah
+        onPressed: () => _onNavTapped(2),
         backgroundColor: Colors.blueAccent,
         shape: const CircleBorder(),
         elevation: 4,
         child: const Icon(Icons.emoji_emotions, color: Colors.white, size: 28),
       ),
 
-      // ✅ Lokasi Tombol Tengah: Di Tengah BottomNav
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
-      // ✅ BottomNavigationBar Tetap
+      // ✅ BottomNavigationBar menyatu seperti biasa
       bottomNavigationBar: CustomBottomNav(
         currentIndex: _selectedIndex,
         onTap: _onNavTapped,

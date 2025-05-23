@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moodyarin/auth/service_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -52,6 +53,9 @@ class _LoginScreenState extends State<LoginScreen> {
       // Jika login sukses
       if (response.session != null && response.user != null) {
         _showCustomSnackbar('Login berhasil!', isError: false);
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('is_logged_in', true);
 
         await Future.delayed(
           const Duration(seconds: 2),
