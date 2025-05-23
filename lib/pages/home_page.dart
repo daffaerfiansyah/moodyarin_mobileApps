@@ -8,22 +8,21 @@ import 'package:moodyarin/pages/mood_page.dart';
 // import 'package:moodyarin/pages/profil_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final int initialIndex;
+  const HomePage({super.key, this.initialIndex = 0});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
-  // final List<Widget> _pages = const [
-  //   EntryPage(),
-  //   // StatistikPage(),
-  //   // MoodPage(),
-  //   // KalenderPage(),
-  //   // ProfilPage(),
-  // ];
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex; // pakai argumen saat initState
+  }
 
   final List<Widget> _pages = const [
     EntryPage(),
@@ -32,7 +31,6 @@ class _HomePageState extends State<HomePage> {
     Center(child: Text("Kalender")),
     Center(child: Text("Profil")),
   ];
-
 
   void _onNavTapped(int index) {
     setState(() {
@@ -44,10 +42,8 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: false, // ✅ Tidak naik saat keyboard
+      resizeToAvoidBottomInset: false,
       body: _pages[_selectedIndex],
-
-      // ✅ FAB tetap pakai bawaan Scaffold
       floatingActionButton: FloatingActionButton(
         onPressed: () => _onNavTapped(2),
         backgroundColor: Colors.blueAccent,
@@ -55,10 +51,7 @@ class _HomePageState extends State<HomePage> {
         elevation: 4,
         child: const Icon(Icons.emoji_emotions, color: Colors.white, size: 28),
       ),
-
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-      // ✅ BottomNavigationBar menyatu seperti biasa
       bottomNavigationBar: CustomBottomNav(
         currentIndex: _selectedIndex,
         onTap: _onNavTapped,
@@ -66,3 +59,4 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+

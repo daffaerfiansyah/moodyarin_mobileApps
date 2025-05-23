@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 
+import 'package:moodyarin/pages/entry_page.dart';
+
 class MoodPage extends StatefulWidget {
   const MoodPage({super.key});
 
@@ -49,7 +51,7 @@ class _MoodPageState extends State<MoodPage> {
       barrierColor: Colors.black54,
       transitionDuration: Duration(milliseconds: 500),
       pageBuilder: (context, animation, secondaryAnimation) {
-        return SizedBox(); // kosong karena kita pakai transitionBuilder
+        return SizedBox();
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         final curvedValue = Curves.easeOut.transform(animation.value) - 1.0;
@@ -85,7 +87,7 @@ class _MoodPageState extends State<MoodPage> {
                         Image.asset('assets/IMG-09.png', height: 100),
                         const SizedBox(height: 16),
                         Text(
-                          'Catatan Mood harian kamu sudah \ntersimpan.Selamat beraktivitas dan jangan lupa untuk bahagia :)',
+                          'Catatan Mood harian kamu sudah \ntersimpan. Selamat beraktivitas dan jangan lupa untuk bahagia :)',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.jua(
                             color: Colors.white,
@@ -94,7 +96,7 @@ class _MoodPageState extends State<MoodPage> {
                         ),
                         const SizedBox(height: 24),
                         TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () => Navigator.pushReplacementNamed(context, '/home', arguments: 0),
                           child: const Text(
                             'Tap untuk melanjutkan',
                             style: TextStyle(color: Colors.white),
@@ -112,14 +114,18 @@ class _MoodPageState extends State<MoodPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        leading: const BackButton(color: Colors.blue),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.blue),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/home', arguments: 0);
+          },
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -132,171 +138,199 @@ class _MoodPageState extends State<MoodPage> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF5B86E5), Color(0xFF36D1DC)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: 120, // padding agar tombol simpan tidak tertutup
+            ),
+            child: SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Bagaimana hari ini?",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF5B86E5), Color(0xFF36D1DC)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(moodList.length, (index) {
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedMood = index;
-                          });
-                        },
-                        child: SizedBox(
-                          width: 64, // Lebar tetap
-                          height: 100, // Tinggi tetap untuk keseluruhan item
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color:
-                                      selectedMood == index
-                                          ? Colors.white
-                                          : Colors.transparent,
-                                  border:
-                                      selectedMood == index
-                                          ? null
-                                          : Border.all(
-                                            color: Colors.white,
-                                            width: 2,
-                                          ),
-                                ),
-                                child: ClipOval(
-                                  child: Image.asset(
-                                    moodList[index]['emoji'],
-                                    width: 48,
-                                    height: 48,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              SizedBox(
-                                height:
-                                    40, // Tinggi tetap untuk teks 2 baris (kira-kira 2 x fontSize)
-                                child: Text(
-                                  moodList[index]['label'],
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.jua(
-                                    color:
-                                        selectedMood == index
-                                            ? Colors.white
-                                            : Colors.white70,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Bagaimana hari ini?",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
                         ),
-                      );
-                    }),
-                  )
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(moodList.length, (index) {
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedMood = index;
+                                });
+                              },
+                              child: SizedBox(
+                                width: 64,
+                                height: 100,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color:
+                                            selectedMood == index
+                                                ? Colors.white
+                                                : Colors.transparent,
+                                        border:
+                                            selectedMood == index
+                                                ? null
+                                                : Border.all(
+                                                  color: Colors.white,
+                                                  width: 2,
+                                                ),
+                                      ),
+                                      child: ClipOval(
+                                        child: Image.asset(
+                                          moodList[index]['emoji'],
+                                          width: 48,
+                                          height: 48,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    SizedBox(
+                                      height: 40,
+                                      child: Text(
+                                        moodList[index]['label'],
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.jua(
+                                          color:
+                                              selectedMood == index
+                                                  ? Colors.white
+                                                  : Colors.white70,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF5B86E5), Color(0xFF36D1DC)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Ingin catatan hari ini?",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _noteController,
+                          maxLines: 4,
+                          style: const TextStyle(color: Colors.black),
+                          decoration: InputDecoration(
+                            hintText: 'Tambah Catatan...',
+                            hintStyle: TextStyle(color: Colors.grey),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.all(12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-
-            // Catatan
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF5B86E5), Color(0xFF36D1DC)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                bottom: 20,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Ingin catatan hari ini?",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+              child: Container(
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Simpan jika Catatan Mood Harian kamu\n sudah kamu cantumkan.",
+                      style: GoogleFonts.raleway(
+                        fontSize: 12,
+                        color: Colors.blueAccent,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _noteController,
-                    maxLines: 4,
-                    style: const TextStyle(color: Colors.grey),
-                    decoration: InputDecoration(
-                      hintText: 'Tambah Catatan...',
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.all(12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      onPressed: () {
+                        showMoodSavedDialog(context);
+                      },
+                      child: const Text(
+                        "Simpan",
+                        style: TextStyle(fontSize: 16),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 160),
-
-            Text(
-              "Simpan jika Catatan Mood Harian kamu sudah kamu cantumkan.",
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 12),
-
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(
-                  double.infinity,
-                  50,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  ],
                 ),
               ),
-              onPressed: () {
-                showMoodSavedDialog(context);
-              },
-              child: const Text("Simpan", style: TextStyle(fontSize: 16)),
             ),
-          ],
-        ),
+          )
+        ],
       ),
     );
   }

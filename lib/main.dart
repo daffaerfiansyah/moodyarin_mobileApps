@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:moodyarin/routes/routes.dart';
 import 'package:moodyarin/constant.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,9 @@ void main() async {
   } else {
     initialRoute = isLoggedIn ? AppRoutes.homepage : AppRoutes.login;
   }
+
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID', null);
 
 
   runApp(MyApp(initialRoute: initialRoute));

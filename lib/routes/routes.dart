@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moodyarin/pages/mood_page.dart';
 import 'package:moodyarin/pages/splash_screen.dart';
 import 'package:moodyarin/pages/welcome_screen.dart';
 import 'package:moodyarin/pages/introduction_screen.dart';
@@ -15,6 +16,7 @@ class AppRoutes {
   static const register = '/regist';
   static const homepage = '/home';
   static const entry = '/entry';
+  static const mood = '/mood';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -44,8 +46,15 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const LoginScreen());
       case register:
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
+      case mood:
+        return MaterialPageRoute(builder: (_) => const MoodPage());
       case homepage:
-        return MaterialPageRoute(builder: (_) => const HomePage());
+        // cek apakah ada argument bertipe int, jika tidak default 0
+        final int initialIndex =
+            (settings.arguments is int) ? settings.arguments as int : 0;
+        return MaterialPageRoute(
+          builder: (_) => HomePage(initialIndex: initialIndex),
+        );
       // case entry:
       //   return MaterialPageRoute(builder: (_) => const EntryPage());
       default:

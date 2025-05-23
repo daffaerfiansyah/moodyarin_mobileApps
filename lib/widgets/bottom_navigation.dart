@@ -21,7 +21,11 @@ class CustomBottomNav extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(icon: Icons.book_rounded, label: 'Entri', index: 0),
+            _buildNavItem(
+              icon: Icons.book_rounded, 
+              label: 'Entri', 
+              index: 0
+            ),
             _buildNavItem(
               icon: Icons.bar_chart_rounded,
               label: 'Statistik',
