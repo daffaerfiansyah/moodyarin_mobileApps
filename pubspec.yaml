@@ -16,6 +16,7 @@ dependencies:
   supabase_flutter: ^2.0.0
   shared_preferences: ^2.2.2
   another_flushbar: ^1.10.30
+  flutter_slidable: ^3.0.0
   intl: ^0.18.1
 
   

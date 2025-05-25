@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
-
-import 'package:moodyarin/pages/entry_page.dart';
+import 'package:moodyarin/models/mood_entry.dart';
+import 'package:moodyarin/services/mood_service.dart';
+import 'package:another_flushbar/flushbar.dart';
 
 class MoodPage extends StatefulWidget {
   const MoodPage({super.key});
@@ -14,6 +15,7 @@ class MoodPage extends StatefulWidget {
 class _MoodPageState extends State<MoodPage> {
   int? selectedMood;
   final TextEditingController _noteController = TextEditingController();
+  
 
   final List<Map<String, dynamic>> moodList = [
     {"emoji": "assets/Emoji-1.png", "label": "Sangat Sedih"},
@@ -41,6 +43,11 @@ class _MoodPageState extends State<MoodPage> {
       'Desember',
     ];
     return "${now.day} ${monthNames[now.month]} ${now.year}";
+  }
+
+  DateTime getTodayDate() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day); // hanya tanggal, tanpa jam
   }
 
   void showMoodSavedDialog(BuildContext context) {
@@ -96,7 +103,12 @@ class _MoodPageState extends State<MoodPage> {
                         ),
                         const SizedBox(height: 24),
                         TextButton(
-                          onPressed: () => Navigator.pushReplacementNamed(context, '/home', arguments: 0),
+                          onPressed:
+                              () => Navigator.pushReplacementNamed(
+                                context,
+                                '/home',
+                                arguments: 0,
+                              ),
                           child: const Text(
                             'Tap untuk melanjutkan',
                             style: TextStyle(color: Colors.white),
@@ -112,6 +124,21 @@ class _MoodPageState extends State<MoodPage> {
         );
       },
     );
+  }
+
+  void showTopSnackbar(String message, {bool isError = true}) {
+    Flushbar(
+      messageText: Text(
+        message,
+        style: const TextStyle(color: Colors.white, fontSize: 14),
+      ),
+      backgroundColor: isError ? Colors.red.shade400 : Colors.green.shade600,
+      icon: const Icon(Icons.info_outline, color: Colors.white),
+      borderRadius: BorderRadius.circular(12),
+      margin: const EdgeInsets.all(16),
+      duration: const Duration(seconds: 3),
+      flushbarPosition: FlushbarPosition.TOP,
+    ).show(context);
   }
 
   @override
@@ -145,7 +172,7 @@ class _MoodPageState extends State<MoodPage> {
               left: 16,
               right: 16,
               top: 16,
-              bottom: 120, // padding agar tombol simpan tidak tertutup
+              bottom: 120,
             ),
             child: SingleChildScrollView(
               child: Column(
@@ -287,9 +314,7 @@ class _MoodPageState extends State<MoodPage> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: const EdgeInsets.only(
-                bottom: 20,
-              ),
+              padding: const EdgeInsets.only(bottom: 20),
               child: Container(
                 color: Colors.white,
                 padding: const EdgeInsets.symmetric(
@@ -317,8 +342,25 @@ class _MoodPageState extends State<MoodPage> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      onPressed: () {
-                        showMoodSavedDialog(context);
+                      onPressed: () async {
+                        if (selectedMood != null) {
+                          final entry = MoodEntry(
+                            date: getTodayDate(),
+                            mood: moodList[selectedMood!]['label'],
+                            note: _noteController.text,
+                          );
+
+                          try {
+                            await MoodService.saveMood(entry);
+                            showMoodSavedDialog(context);
+                          } catch (e) {
+                            showTopSnackbar('Gagal menyimpan mood: $e');
+                          }
+                        } else {
+                          showTopSnackbar(
+                            'Silahkan pilih mood terlebih dahulu.',
+                          );
+                        }
                       },
                       child: const Text(
                         "Simpan",
@@ -329,7 +371,7 @@ class _MoodPageState extends State<MoodPage> {
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
