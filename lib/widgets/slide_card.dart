@@ -60,7 +60,7 @@ class _SwipeableCardState extends State<SwipeableCard>
           child: Container(
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Colors.red.shade600,
+              color: Colors.black12,
               borderRadius: BorderRadius.circular(16),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -68,11 +68,11 @@ class _SwipeableCardState extends State<SwipeableCard>
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.white),
+                  icon: const Icon(Icons.edit, color: Colors.lightBlue),
                   onPressed: widget.onEdit,
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.white),
+                  icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: widget.onDelete,
                 ),
               ],

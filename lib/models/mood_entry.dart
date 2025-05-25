@@ -1,13 +1,22 @@
 class MoodEntry {
+  // TAMBAHKAN PROPERTI 'id'
+  final String id;
   final DateTime date;
   final String mood;
   final String note;
 
-  MoodEntry({required this.date, required this.mood, required this.note});
+  // TAMBAHKAN 'id' DI CONSTRUCTOR
+  MoodEntry({
+    required this.id,
+    required this.date,
+    required this.mood,
+    required this.note,
+  });
 
   Map<String, dynamic> toJson() {
     return {
-      'date': date.toIso8601String(), // pastikan disimpan dalam format ISO
+      // 'id' tidak perlu dikirim saat insert karena dibuat otomatis oleh Supabase
+      'date': date.toIso8601String(),
       'mood': mood,
       'note': note,
     };
@@ -15,7 +24,9 @@ class MoodEntry {
 
   factory MoodEntry.fromJson(Map<String, dynamic> json) {
     return MoodEntry(
-      date: DateTime.parse(json['date']), // ← dikonversi ke DateTime
+      // AMBIL 'id' DARI JSON RESPONSE
+      id: json['id'].toString(),
+      date: DateTime.parse(json['date']),
       mood: json['mood'],
       note: json['note'],
     );

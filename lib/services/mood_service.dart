@@ -18,4 +18,30 @@ class MoodService {
       throw Exception('Insert gagal');
     }
   }
+
+  static Future<void> updateMood(MoodEntry entry) async {
+    final response = await Supabase.instance.client
+        .from('mood_entries')
+        .update({
+          'mood': entry.mood,
+          'note': entry.note,
+          'date': entry.date.toIso8601String(),
+        })
+        .eq('id', entry.id); // Targetkan baris data dengan ID yang cocok
+
+    if (response != null && response.error != null) {
+      throw Exception('Update gagal: ${response.error!.message}');
+    }
+  }
+
+  static Future<void> deleteMood(String id) async {
+    final response = await Supabase.instance.client
+        .from('mood_entries')
+        .delete()
+        .eq('id', id); // Targetkan baris data dengan ID yang cocok
+
+    if (response != null && response.error != null) {
+      throw Exception('Delete gagal: ${response.error!.message}');
+    }
+  }
 }

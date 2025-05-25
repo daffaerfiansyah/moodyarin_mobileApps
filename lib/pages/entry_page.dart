@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:moodyarin/pages/mood_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:moodyarin/models/mood_entry.dart';
+import 'package:moodyarin/services/mood_service.dart';
 import 'package:moodyarin/widgets/slide_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:another_flushbar/flushbar.dart';
 
 class EntryPage extends StatefulWidget {
   const EntryPage({super.key});
-  
 
   @override
   State<EntryPage> createState() => _EntryPageState();
 }
+
 class _EntryPageState extends State<EntryPage> {
   DateTime _currentDate = DateTime.now();
   List<MoodEntry> _moodEntries = [];
@@ -43,7 +46,8 @@ class _EntryPageState extends State<EntryPage> {
         .from('mood_entries')
         .select()
         .gte('date', start.toIso8601String())
-        .lte('date', end.toIso8601String());
+        .lte('date', end.toIso8601String())
+        .order('date', ascending: false);
 
     final data = response as List;
     final moods = data.map((e) => MoodEntry.fromJson(e)).toList();
@@ -90,6 +94,93 @@ class _EntryPageState extends State<EntryPage> {
     }).toList();
   }
 
+  void showTopSnackbar(String message, {bool isError = true}) {
+    if (!mounted) return;
+
+    Flushbar(
+      messageText: Text(
+        message,
+        style: const TextStyle(color: Colors.white, fontSize: 14),
+      ),
+      backgroundColor: isError ? Colors.red.shade400 : Colors.green.shade600,
+      icon: Icon(
+        isError
+            ? Icons.info_outline
+            : Icons.check_circle_outline,
+        color: Colors.white,
+      ),
+      borderRadius: BorderRadius.circular(12),
+      margin: const EdgeInsets.all(16),
+      duration: const Duration(seconds: 3),
+      flushbarPosition: FlushbarPosition.TOP,
+    ).show(context);
+  }
+
+  Future<void> _deleteEntry(String id) async {
+    final bool? confirmed = await showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Konfirmasi Hapus'),
+            content: const Text(
+              'Apakah Anda yakin ingin menghapus catatan mood ini?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Batal'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Hapus'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await MoodService.deleteMood(id);
+
+        setState(() {
+          _moodEntries.removeWhere((entry) => entry.id == id);
+        });
+
+        if (mounted) {
+          showTopSnackbar('Catatan Berhasil Dihapus!', isError: false);
+        }
+      } catch (e) {
+        if (mounted) {
+          showTopSnackbar('Gagal Menghapus: $e');
+        }
+      }
+    }
+  }
+
+  Future<void> _showEditModal(MoodEntry entry) async {
+    final MoodEntry? updatedEntry = await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return EditMoodModal(entry: entry);
+      },
+    );
+
+    if (updatedEntry != null) {
+      final index = _moodEntries.indexWhere((e) => e.id == updatedEntry.id);
+      if (index != -1) {
+        setState(() {
+          _moodEntries[index] = updatedEntry;
+        });
+      }
+      showTopSnackbar('Catatan berhasil diperbarui!', isError: false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,7 +203,6 @@ class _EntryPageState extends State<EntryPage> {
                 constraints: const BoxConstraints(),
               ),
             ),
-
             // Teks tengah
             Expanded(
               child: Center(
@@ -125,7 +215,6 @@ class _EntryPageState extends State<EntryPage> {
                 ),
               ),
             ),
-
             // Panah kanan
             Padding(
               padding: const EdgeInsets.only(right: 48),
@@ -143,8 +232,6 @@ class _EntryPageState extends State<EntryPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // FILTER MINGGU
-            // TAMPILKAN DROPDOWN JIKA ADA MOOD
             (_isFirstTime && _moodEntries.isEmpty)
                 ? GestureDetector(
                   onTap: () {
@@ -301,18 +388,145 @@ class _EntryPageState extends State<EntryPage> {
                           final entry = filteredMoodEntries[index];
                           return SwipeableCard(
                             entry: entry,
-                            onEdit: () {
-                              // TODO: Navigasi ke halaman edit
-                            },
-                            onDelete: () {
-                              // TODO: Konfirmasi hapus
-                            },
+                            onEdit: () => _showEditModal(entry),
+                            onDelete: () => _deleteEntry(entry.id),
                           );
                         },
                       ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class EditMoodModal extends StatefulWidget {
+  final MoodEntry entry;
+
+  const EditMoodModal({super.key, required this.entry});
+
+  @override
+  State<EditMoodModal> createState() => _EditMoodModalState();
+}
+
+class _EditMoodModalState extends State<EditMoodModal> {
+  late final TextEditingController _noteController;
+  int? _selectedMoodIndex;
+
+  // Samakan dengan list yang ada di halaman form tambah Anda
+  final List<Map<String, dynamic>> moodList = [
+    {'label': 'Sangat Sedih', 'asset': 'assets/Emoji-1.png'},
+    {'label': 'Sedih', 'asset': 'assets/Emoji-2.png'},
+    {'label': 'Biasa aja', 'asset': 'assets/Emoji-3.png'},
+    {'label': 'Baik', 'asset': 'assets/Emoji-4.png'},
+    {'label': 'Sangat Baik', 'asset': 'assets/Emoji-5.png'},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Isi form dengan data yang sudah ada
+    _noteController = TextEditingController(text: widget.entry.note);
+    _selectedMoodIndex = moodList.indexWhere(
+      (mood) => mood['label'] == widget.entry.mood,
+    );
+  }
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitUpdate() async {
+    if (_selectedMoodIndex == null) return; 
+
+    final updatedEntry = MoodEntry(
+      id: widget.entry.id, 
+      date: widget.entry.date, 
+      mood: moodList[_selectedMoodIndex!]['label'],
+      note: _noteController.text,
+    );
+
+    try {
+      await MoodService.updateMood(updatedEntry);
+      if (mounted) {
+        Navigator.of(context).pop(updatedEntry);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memperbarui: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min, 
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Edit Catatan Mood',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(moodList.length, (index) {
+              final isSelected = _selectedMoodIndex == index;
+              return GestureDetector(
+                onTap: () => setState(() => _selectedMoodIndex = index),
+                child: Opacity(
+                  opacity: isSelected ? 1.0 : 0.5,
+                  child: Image.asset(
+                    moodList[index]['asset'],
+                    width: 48,
+                    height: 48,
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _noteController,
+            decoration: const InputDecoration(
+              labelText: 'Catatan (opsional)',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _submitUpdate,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade600,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text(
+                'Simpan Perubahan',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }

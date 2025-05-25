@@ -6,7 +6,8 @@ import 'package:moodyarin/services/mood_service.dart';
 import 'package:another_flushbar/flushbar.dart';
 
 class MoodPage extends StatefulWidget {
-  const MoodPage({super.key});
+  final MoodEntry? entryToEdit;
+  const MoodPage({super.key, this.entryToEdit});
 
   @override
   State<MoodPage> createState() => _MoodPageState();
@@ -345,6 +346,7 @@ class _MoodPageState extends State<MoodPage> {
                       onPressed: () async {
                         if (selectedMood != null) {
                           final entry = MoodEntry(
+                            id: '',
                             date: getTodayDate(),
                             mood: moodList[selectedMood!]['label'],
                             note: _noteController.text,
