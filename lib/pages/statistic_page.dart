@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '';
 
 class StatistikPage extends StatefulWidget {
   const StatistikPage({super.key});
@@ -11,10 +12,10 @@ class StatistikPage extends StatefulWidget {
 }
 
 class _StatistikPageState extends State<StatistikPage> {
-  // Tanggal statis untuk tampilan AppBar
   DateTime _currentDate = DateTime.now();
+  // Replaced with _touchedIndex to handle interaction for both chart and legend
+  int? _touchedIndex;
 
-  // Fungsi navigasi bulan (logika UI saja untuk saat ini)
   String get formattedMonthYear {
     return DateFormat('MMMM yyyy', 'id_ID').format(_currentDate);
   }
@@ -22,69 +23,55 @@ class _StatistikPageState extends State<StatistikPage> {
   void _nextMonth() {
     setState(() {
       _currentDate = DateTime(_currentDate.year, _currentDate.month + 1);
+      _touchedIndex = null; // Reset selection on month change
     });
   }
 
   void _previousMonth() {
     setState(() {
       _currentDate = DateTime(_currentDate.year, _currentDate.month - 1);
+      _touchedIndex = null; // Reset selection on month change
     });
   }
 
-  // --- DATA STATIS UNTUK UI SLICING ---
+  // --- STATIC DATA FOR UI SLICING ---
 
-  // Data untuk Line Chart (Sumbu X: 0=M1, 1=M2, dst. Sumbu Y: 1=Sangat Sedih, 5=Sangat Baik)
+  // Data for Line Chart
   final List<FlSpot> _lineChartSpots = const [
-    FlSpot(0, 3.5), // Data untuk tgl 1
-    FlSpot(1, 4.0), // Data untuk tgl 7
-    FlSpot(2, 2.0), // Data untuk tgl 14
-    FlSpot(3, 3.0), // Data untuk tgl 21
-    FlSpot(4, 4.5), // Data untuk tgl 28
-    FlSpot(5, 4.2), // Data untuk tgl 30
-    FlSpot(6, 5.0), // Data untuk tgl 31
+    FlSpot(0, 3.5),
+    FlSpot(1, 4.0),
+    FlSpot(2, 2.0),
+    FlSpot(3, 3.0),
+    FlSpot(4, 4.5),
+    FlSpot(5, 4.2),
+    FlSpot(6, 5.0),
   ];
 
-  // Data untuk Radial Gauge (distribusi mood dalam sebulan)
-  final List<PieChartSectionData> _radialSections = [
-    PieChartSectionData(
-      color: Color(0xFF34D399),
-      value: 25,
-      title: '',
-      radius: 25,
-    ), // Sangat Baik
-    PieChartSectionData(
-      color: Color(0xFF60A5FA),
-      value: 30,
-      title: '',
-      radius: 25,
-    ), // Baik
-    PieChartSectionData(
-      color: Color(0xFFFBBF24),
-      value: 20,
-      title: '',
-      radius: 25,
-    ), // Biasa aja
-    PieChartSectionData(
-      color: Color(0xFFF87171),
-      value: 15,
-      title: '',
-      radius: 25,
-    ), // Sedih
-    PieChartSectionData(
-      color: Color(0xFFEF4444),
-      value: 10,
-      title: '',
-      radius: 25,
-    ), // Sangat Sedih
-  ];
+  // Data for Radial Gauge (mood distribution in a month)
+  final Map<String, int> _moodDistribution = {
+    'Sangat Baik': 10,
+    'Baik': 8,
+    'Biasa aja': 6,
+    'Sedih': 4,
+    'Sangat Sedih': 2,
+  };
 
-  // Aset emoji untuk legenda
+  // Emoji assets for the legend
   static const Map<String, String> _emojiAssets = {
     'Sangat Baik': 'assets/Emoji-5.png',
     'Baik': 'assets/Emoji-4.png',
     'Biasa aja': 'assets/Emoji-3.png',
     'Sedih': 'assets/Emoji-2.png',
     'Sangat Sedih': 'assets/Emoji-1.png',
+  };
+
+  // Color map for moods
+  static const Map<String, Color> _moodColorMap = {
+    'Sangat Baik': Color(0xFFFBBF24),
+    'Baik': Color(0xFF34D399),
+    'Biasa aja': Color(0xFF60A5FA),
+    'Sedih': Color.fromARGB(255, 255, 154, 95),
+    'Sangat Sedih': Color(0xFFEF4444),
   };
 
   @override
@@ -94,29 +81,39 @@ class _StatistikPageState extends State<StatistikPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         automaticallyImplyLeading: false,
         title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.black54),
-              onPressed: _previousMonth,
+            Padding(
+              padding: const EdgeInsets.only(left: 48),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios),
+                onPressed: _previousMonth,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
             ),
             Expanded(
               child: Center(
                 child: Text(
                   formattedMonthYear,
                   style: GoogleFonts.jua(
-                    fontSize: 24,
-                    color: Colors.indigo.shade900,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.arrow_forward_ios, color: Colors.black54),
-              onPressed: _nextMonth,
+            Padding(
+              padding: const EdgeInsets.only(right: 48),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_forward_ios),
+                onPressed: _nextMonth,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
             ),
           ],
         ),
@@ -128,7 +125,7 @@ class _StatistikPageState extends State<StatistikPage> {
           children: [
             _buildSectionHeader(
               'Grafik Mood',
-              'Semangat!',
+              'Dalam Satu Bulan',
               const Color(0xFF4F46E5),
             ),
             const SizedBox(height: 12),
@@ -136,7 +133,7 @@ class _StatistikPageState extends State<StatistikPage> {
             const SizedBox(height: 28),
             _buildSectionHeader(
               'Perhitungan Mood',
-              'Ayo tingkatkan bahagiamu!',
+              'Sentuh Mood untuk melihat detail jumlah!',
               const Color(0xFF4F46E5),
             ),
             const SizedBox(height: 12),
@@ -147,7 +144,6 @@ class _StatistikPageState extends State<StatistikPage> {
     );
   }
 
-  // Widget untuk judul setiap seksi
   Widget _buildSectionHeader(String title, String subtitle, Color color) {
     return Align(
       alignment: Alignment.center,
@@ -177,7 +173,6 @@ class _StatistikPageState extends State<StatistikPage> {
     );
   }
 
-  // Widget untuk kartu Grafik Garis (Line Chart)
   Widget _buildLineChartCard() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 24, 24, 16),
@@ -219,9 +214,9 @@ class _StatistikPageState extends State<StatistikPage> {
               border: Border.all(color: const Color(0xffe7e8ec), width: 1),
             ),
             minX: 0,
-            maxX: 6, // 4 minggu (0, 1, 2, 3)
+            maxX: 6,
             minY: 1,
-            maxY: 5, // 5 level mood
+            maxY: 5,
             lineBarsData: [
               LineChartBarData(
                 spots: _lineChartSpots,
@@ -249,8 +244,15 @@ class _StatistikPageState extends State<StatistikPage> {
     );
   }
 
-  // Widget untuk kartu Grafik Lingkaran (Radial Gauge)
   Widget _buildRadialGaugeCard() {
+    // Get the keys to ensure consistent ordering
+    final moodKeys = _moodDistribution.keys.toList();
+    // Calculate total value for percentage calculation
+    final totalValue = _moodDistribution.values.fold(
+      0,
+      (sum, item) => sum + item,
+    );
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -267,35 +269,123 @@ class _StatistikPageState extends State<StatistikPage> {
       child: Column(
         children: [
           SizedBox(
-            height: 150,
-            child: PieChart(
-              PieChartData(
-                sections: _radialSections,
-                pieTouchData: PieTouchData(enabled: false),
-                startDegreeOffset: -90, // Mulai dari atas
-                centerSpaceRadius: 60,
-                sectionsSpace: 4,
-              ),
+            height: 180,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                PieChart(
+                  PieChartData(
+                    pieTouchData: PieTouchData(enabled: false),
+                    sections: List.generate(_moodDistribution.length, (i) {
+                      final isTouched = i == _touchedIndex;
+                      final radius = isTouched ? 35.0 : 25.0;
+                      final moodName = moodKeys[i];
+                      final value = _moodDistribution[moodName]!;
+
+                      return PieChartSectionData(
+                        color: _moodColorMap[moodName],
+                        value: value.toDouble(),
+                        title: '',
+                        radius: radius,
+                      );
+                    }),
+                    startDegreeOffset: -90,
+                    centerSpaceRadius: 70,
+                    sectionsSpace: 4,
+                  ),
+                ),
+                // Teks di tengah akan tetap berfungsi seperti sebelumnya
+                Builder(
+                  builder: (context) {
+                    if (_touchedIndex == null || totalValue == 0) {
+                      return Text(
+                        'Presentase',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade600,
+                        ),
+                      );
+                    }
+
+                    final moodName = moodKeys[_touchedIndex!];
+                    final value = _moodDistribution[moodName]!;
+                    final percentage = (value / totalValue * 100)
+                        .toStringAsFixed(0);
+
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '$percentage%',
+                          style: GoogleFonts.jua(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: _moodColorMap[moodName],
+                          ),
+                        ),
+                        Text(
+                          moodName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade800,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
-          // Legenda Emoji
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Image.asset(_emojiAssets['Sangat Sedih']!, width: 50),
-              Image.asset(_emojiAssets['Sedih']!, width: 50),
-              Image.asset(_emojiAssets['Biasa aja']!, width: 50),
-              Image.asset(_emojiAssets['Baik']!, width: 50),
-              Image.asset(_emojiAssets['Sangat Baik']!, width: 50),
-            ],
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children:
+                _emojiAssets.entries
+                    .map((entry) {
+                      final moodLabel = entry.key;
+                      final assetPath = entry.value;
+
+                      final currentIndex = moodKeys.indexOf(moodLabel);
+                      final isSelected = _touchedIndex == currentIndex;
+
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _touchedIndex = isSelected ? null : currentIndex;
+                          });
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Opacity(
+                              opacity: isSelected ? 1.0 : 0.0,
+                              child: Text(
+                                '${_moodDistribution[moodLabel]} Hari',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  color: Colors.indigo.shade800,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Image.asset(assetPath, width: 50),
+                          ],
+                        ),
+                      );
+                    })
+                    .toList()
+                    .reversed
+                    .toList(),
           ),
         ],
       ),
     );
   }
-
-  // --- Konfigurasi Label untuk Grafik ---
 
   SideTitles _leftTitles() => SideTitles(
     showTitles: true,
