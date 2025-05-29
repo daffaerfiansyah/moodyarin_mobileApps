@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:moodyarin/pages/mood_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:moodyarin/models/mood_entry.dart';
 import 'package:moodyarin/services/mood_service.dart';
@@ -21,6 +20,7 @@ class _EntryPageState extends State<EntryPage> {
   List<MoodEntry> _moodEntries = [];
   int _selectedWeek = 0; // 0 = semua
   bool _isFirstTime = true;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -39,30 +39,56 @@ class _EntryPageState extends State<EntryPage> {
   }
 
   Future<void> fetchMoodEntries() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true; // <-- Set true di awal
+    });
+
     final start = DateTime(_currentDate.year, _currentDate.month, 1);
     final end = DateTime(_currentDate.year, _currentDate.month + 1, 0);
 
-    final response = await Supabase.instance.client
-        .from('mood_entries')
-        .select()
-        .gte('date', start.toIso8601String())
-        .lte('date', end.toIso8601String())
-        .order('date', ascending: false);
+    try {
+      // Tambahkan try-catch untuk penanganan error yang lebih baik
+      final response = await Supabase.instance.client
+          .from('mood_entries')
+          .select()
+          .gte('date', start.toIso8601String())
+          .lte('date', end.toIso8601String())
+          .order(
+            'date',
+            ascending: false,
+          ); // <-- Sesuai permintaan sebelumnya, data terbaru di atas
 
-    final data = response as List;
-    final moods = data.map((e) => MoodEntry.fromJson(e)).toList();
+      final data = response as List;
+      final moods = data.map((e) => MoodEntry.fromJson(e)).toList();
 
-    setState(() {
-      _moodEntries = moods;
-    });
-
-    if (_moodEntries.isNotEmpty) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('hasUsedApp', true);
-
+      if (!mounted) return;
       setState(() {
-        _isFirstTime = false;
+        _moodEntries = moods;
+        // _isLoading akan di set false setelah pengecekan _isFirstTime
       });
+
+      if (_moodEntries.isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('hasUsedApp', true);
+        if (mounted) {
+          // Selalu cek mounted sebelum setState di async gap
+          setState(() {
+            _isFirstTime = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        showTopSnackbar('Gagal memuat data: $e');
+      }
+    } finally {
+      // Pastikan isLoading selalu di-set false
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // <-- Set false di akhir (di dalam finally)
+        });
+      }
     }
   }
 
@@ -230,9 +256,12 @@ class _EntryPageState extends State<EntryPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
           children: [
-            (_isFirstTime && _moodEntries.isEmpty)
+            (_isFirstTime && _moodEntries.isEmpty && !_isLoading)
                 ? GestureDetector(
                   onTap: () {
                     Navigator.pushNamed(context, '/mood');
@@ -270,7 +299,7 @@ class _EntryPageState extends State<EntryPage> {
                     ),
                   ),
                 )
-                : (_moodEntries.isNotEmpty
+                : (_moodEntries.isNotEmpty || !_isLoading)
                     ? DropdownButtonHideUnderline(
                       child: Container(
                         width: double.infinity,
@@ -345,55 +374,68 @@ class _EntryPageState extends State<EntryPage> {
                           ),
                         ),
                       ),
-                    )),
-
+                    ),
             const SizedBox(height: 16),
-
-            // JIKA TIDAK ADA MOOD
             Expanded(
-              child:
-                  _moodEntries.isEmpty
-                      ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            height: 180,
-                            child: Image.asset('assets/IMG-08.png'),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Ayo, ekspresikan mood kamu\nuntuk pertama kalinya',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.jua(
-                              color: Colors.blueAccent,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
+                    child: RefreshIndicator(
+                      onRefresh: fetchMoodEntries, // Panggil fungsi fetch saat di-refresh
+                      child: _moodEntries.isEmpty && !_isLoading // Tambah cek !_isLoading
+                          ? LayoutBuilder( // Gunakan LayoutBuilder agar RefreshIndicator berfungsi saat kosong
+                              builder: (context, constraints) {
+                                return SingleChildScrollView(
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                                    child: Center(
+                                      child: _isFirstTime // Jika ini pertama kali dan daftar kosong
+                                          ? Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                SizedBox(height: 180, child: Image.asset('assets/IMG-08.png')),
+                                                const SizedBox(height: 20),
+                                                Text('Ayo, ekspresikan mood kamu\nuntuk pertama kalinya', textAlign: TextAlign.center, style: GoogleFonts.jua(color: Colors.blueAccent, fontSize: 24, fontWeight: FontWeight.w600)),
+                                                const SizedBox(height: 8),
+                                                Text('Klik tombol emoji pada navigasi\ndibawah ini!', textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.blueGrey, fontSize: 14)),
+                                              ],
+                                            )
+                                          : Column(
+                                            children: [
+                                              SizedBox(
+                                                height: 180,
+                                                  child: Image.asset(
+                                                      'assets/IMG-08.png',
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'Belum ada catatan mood untuk bulan ini.\nGeser ke bawah untuk memuat ulang.',
+                                                    textAlign:
+                                                        TextAlign.center,
+                                                     style:
+                                                      GoogleFonts.poppins(
+                                                         color:Colors.blueGrey,
+                                                         fontSize: 14,
+                                                        ),
+                                                  ),
+                                            ],
+                                          )
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : ListView.builder(
+                              itemCount: filteredMoodEntries.length,
+                              itemBuilder: (context, index) {
+                                final entry = filteredMoodEntries[index];
+                                return SwipeableCard(
+                                  entry: entry,
+                                  onEdit: () => _showEditModal(entry),
+                                  onDelete: () => _deleteEntry(entry.id),
+                                );
+                              },
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Klik tombol emoji pada navigasi\ndibawah ini!',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(
-                              color: Colors.blueGrey,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      )
-                      // JIKA ADA MOOD ENTRY
-                      : ListView.builder(
-                        itemCount: filteredMoodEntries.length,
-                        itemBuilder: (context, index) {
-                          final entry = filteredMoodEntries[index];
-                          return SwipeableCard(
-                            entry: entry,
-                            onEdit: () => _showEditModal(entry),
-                            onDelete: () => _deleteEntry(entry.id),
-                          );
-                        },
-                      ),
-            ),
+                    ),
+                  ),
           ],
         ),
       ),
@@ -414,7 +456,7 @@ class _EditMoodModalState extends State<EditMoodModal> {
   late final TextEditingController _noteController;
   int? _selectedMoodIndex;
 
-  // Samakan dengan list yang ada di halaman form tambah Anda
+
   final List<Map<String, dynamic>> moodList = [
     {'label': 'Sangat Sedih', 'asset': 'assets/Emoji-1.png'},
     {'label': 'Sedih', 'asset': 'assets/Emoji-2.png'},

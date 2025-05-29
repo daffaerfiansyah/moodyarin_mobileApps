@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '';
+import 'package:moodyarin/models/mood_entry.dart';
+import 'package:moodyarin/services/mood_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class StatistikPage extends StatefulWidget {
   const StatistikPage({super.key});
@@ -13,50 +15,22 @@ class StatistikPage extends StatefulWidget {
 
 class _StatistikPageState extends State<StatistikPage> {
   DateTime _currentDate = DateTime.now();
-  // Replaced with _touchedIndex to handle interaction for both chart and legend
-  int? _touchedIndex;
+  bool _isLoading = true;
+  List<MoodEntry> _allMoodsForMonth = [];
+  String? _selectedMoodLabel;
 
   String get formattedMonthYear {
     return DateFormat('MMMM yyyy', 'id_ID').format(_currentDate);
   }
 
-  void _nextMonth() {
-    setState(() {
-      _currentDate = DateTime(_currentDate.year, _currentDate.month + 1);
-      _touchedIndex = null; // Reset selection on month change
-    });
-  }
-
-  void _previousMonth() {
-    setState(() {
-      _currentDate = DateTime(_currentDate.year, _currentDate.month - 1);
-      _touchedIndex = null; // Reset selection on month change
-    });
-  }
-
-  // --- STATIC DATA FOR UI SLICING ---
-
-  // Data for Line Chart
-  final List<FlSpot> _lineChartSpots = const [
-    FlSpot(0, 3.5),
-    FlSpot(1, 4.0),
-    FlSpot(2, 2.0),
-    FlSpot(3, 3.0),
-    FlSpot(4, 4.5),
-    FlSpot(5, 4.2),
-    FlSpot(6, 5.0),
-  ];
-
-  // Data for Radial Gauge (mood distribution in a month)
-  final Map<String, int> _moodDistribution = {
-    'Sangat Baik': 10,
-    'Baik': 8,
-    'Biasa aja': 6,
-    'Sedih': 4,
-    'Sangat Sedih': 2,
+  static const Map<String, double> _moodValueMap = {
+    'Sangat Baik': 5.0,
+    'Baik': 4.0,
+    'Biasa aja': 3.0,
+    'Sedih': 2.0,
+    'Sangat Sedih': 1.0,
   };
 
-  // Emoji assets for the legend
   static const Map<String, String> _emojiAssets = {
     'Sangat Baik': 'assets/Emoji-5.png',
     'Baik': 'assets/Emoji-4.png',
@@ -75,7 +49,104 @@ class _StatistikPageState extends State<StatistikPage> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _fetchAndProcessData();
+  }
+
+  Future<void> _fetchAndProcessData() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _selectedMoodLabel = null; // Reset interaksi saat data baru dimuat
+    });
+
+    final firstDay = DateTime(_currentDate.year, _currentDate.month, 1);
+    final lastDay = DateTime(_currentDate.year, _currentDate.month + 1, 0);
+
+    try {
+      final response = await Supabase.instance.client
+          .from('mood_entries')
+          .select()
+          .gte('date', firstDay.toIso8601String())
+          .lte('date', lastDay.toIso8601String())
+          .order('date', ascending: true);
+
+      final List<dynamic> data = response as List;
+      final moods = data.map((e) => MoodEntry.fromJson(e)).toList();
+
+      if (mounted) {
+        setState(() {
+          _allMoodsForMonth = moods;
+          _isLoading = false;
+        });
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        // Tampilkan pesan error jika gagal mengambil data
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Gagal memuat data: $error"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Map<String, int> _calculateMoodDistribution(List<MoodEntry> entries) {
+    final Map<String, int> distribution = {};
+    for (var entry in entries) {
+      distribution[entry.mood] = (distribution[entry.mood] ?? 0) + 1;
+    }
+    return distribution;
+  }
+
+  List<FlSpot> _processDataForLineChart(List<MoodEntry> entries) {
+    if (entries.isEmpty) return [];
+
+    final List<int> targetDays = [1, 7, 14, 21, 28, 30, 31];
+    final List<FlSpot> spots = [];
+
+    for (int i = 0; i < targetDays.length; i++) {
+      int day = targetDays[i];
+      MoodEntry? closestEntry;
+      for (var entry in entries.where((e) => e.date.day <= day)) {
+        closestEntry = entry;
+      }
+
+      if (closestEntry != null) {
+        final yValue = _moodValueMap[closestEntry.mood] ?? 3.0;
+        spots.add(FlSpot(i.toDouble(), yValue));
+      }
+    }
+    return spots;
+  }
+
+  void _nextMonth() {
+    setState(() {
+      _currentDate = DateTime(_currentDate.year, _currentDate.month + 1);
+      _selectedMoodLabel = null; // Reset pilihan saat ganti bulan
+    });
+    _fetchAndProcessData();
+  }
+
+  void _previousMonth() {
+    setState(() {
+      _currentDate = DateTime(_currentDate.year, _currentDate.month - 1);
+      _selectedMoodLabel = null; // Reset pilihan saat ganti bulan
+    });
+    _fetchAndProcessData();
+  }
+  
+
+  @override
   Widget build(BuildContext context) {
+    final lineChartSpots = _processDataForLineChart(_allMoodsForMonth);
+    final moodDistribution = _calculateMoodDistribution(_allMoodsForMonth);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -118,29 +189,37 @@ class _StatistikPageState extends State<StatistikPage> {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildSectionHeader(
-              'Grafik Mood',
-              'Dalam Satu Bulan',
-              const Color(0xFF4F46E5),
-            ),
-            const SizedBox(height: 12),
-            _buildLineChartCard(),
-            const SizedBox(height: 28),
-            _buildSectionHeader(
-              'Perhitungan Mood',
-              'Sentuh Mood untuk melihat detail jumlah!',
-              const Color(0xFF4F46E5),
-            ),
-            const SizedBox(height: 12),
-            _buildRadialGaugeCard(),
-          ],
-        ),
-      ),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _allMoodsForMonth.isEmpty
+              ? _buildEmptyState()
+              : SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 10.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildSectionHeader(
+                      'Grafik Mood Sebulan',
+                      'Lihat Grafik kamu dalam satu bulan',
+                      const Color(0xFF4F46E5),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildLineChartCard(lineChartSpots),
+                    const SizedBox(height: 28),
+                    _buildSectionHeader(
+                      'Perhitungan Mood',
+                      'Sentuh Mood untuk melihat detail jumlah!',
+                      const Color(0xFF4F46E5),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildRadialGaugeCard(moodDistribution),
+                  ],
+                ),
+              ),
     );
   }
 
@@ -173,7 +252,7 @@ class _StatistikPageState extends State<StatistikPage> {
     );
   }
 
-  Widget _buildLineChartCard() {
+  Widget _buildLineChartCard(List<FlSpot> spots) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 24, 24, 16),
       decoration: BoxDecoration(
@@ -189,68 +268,108 @@ class _StatistikPageState extends State<StatistikPage> {
       ),
       child: SizedBox(
         height: 220,
-        child: LineChart(
-          LineChartData(
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: true,
-              getDrawingHorizontalLine:
-                  (value) =>
-                      const FlLine(color: Color(0xffe7e8ec), strokeWidth: 1),
-              getDrawingVerticalLine:
-                  (value) =>
-                      const FlLine(color: Color(0xffe7e8ec), strokeWidth: 1),
-            ),
-            titlesData: FlTitlesData(
-              leftTitles: AxisTitles(sideTitles: _leftTitles()),
-              rightTitles: AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              bottomTitles: AxisTitles(sideTitles: _bottomTitles()),
-            ),
-            borderData: FlBorderData(
-              show: true,
-              border: Border.all(color: const Color(0xffe7e8ec), width: 1),
-            ),
-            minX: 0,
-            maxX: 6,
-            minY: 1,
-            maxY: 5,
-            lineBarsData: [
-              LineChartBarData(
-                spots: _lineChartSpots,
-                isCurved: true,
-                gradient: LinearGradient(
-                  colors: [Colors.cyan, Colors.red.shade400],
-                ),
-                barWidth: 5,
-                isStrokeCapRound: true,
-                dotData: const FlDotData(show: true),
-                belowBarData: BarAreaData(
-                  show: true,
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.cyan.withOpacity(0.3),
-                      Colors.red.withOpacity(0.3),
+        child:
+            spots.isEmpty
+                ? Center(
+                  child: Text(
+                    "Data bulan ini tidak cukup untuk menampilkan grafik.",
+                    style: GoogleFonts.poppins(),
+                  ),
+                )
+                : LineChart(
+                  LineChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: true,
+                      getDrawingHorizontalLine:
+                          (value) => const FlLine(
+                            color: Color(0xffe7e8ec),
+                            strokeWidth: 1,
+                          ),
+                      getDrawingVerticalLine:
+                          (value) => const FlLine(
+                            color: Color(0xffe7e8ec),
+                            strokeWidth: 1,
+                          ),
+                    ),
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(sideTitles: _leftTitles()),
+                      rightTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      bottomTitles: AxisTitles(sideTitles: _bottomTitles()),
+                    ),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: Border.all(
+                        color: const Color(0xffe7e8ec),
+                        width: 1,
+                      ),
+                    ),
+                    minX: 0,
+                    maxX: 6,
+                    minY: 1,
+                    maxY: 5,
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: spots,
+                        isCurved: true,
+                        gradient: LinearGradient(
+                          colors: [Colors.cyan, Colors.red.shade400],
+                        ),
+                        barWidth: 5,
+                        isStrokeCapRound: true,
+                        dotData: const FlDotData(show: true),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.cyan.withOpacity(0.3),
+                              Colors.red.withOpacity(0.3),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
 
-  Widget _buildRadialGaugeCard() {
-    // Get the keys to ensure consistent ordering
-    final moodKeys = _moodDistribution.keys.toList();
-    // Calculate total value for percentage calculation
-    final totalValue = _moodDistribution.values.fold(
-      0,
-      (sum, item) => sum + item,
+  // Ganti seluruh fungsi _buildRadialGaugeCard Anda dengan versi ini.
+
+  Widget _buildRadialGaugeCard(Map<String, int> distribution) {
+    final orderedMoodKeys = [
+      'Sangat Sedih',
+      'Sedih',
+      'Biasa aja',
+      'Baik',
+      'Sangat Baik',
+    ];
+    final totalValue = distribution.values.fold(0, (sum, item) => sum + item);
+
+    final chartMoodKeys =
+        orderedMoodKeys.where((key) => (distribution[key] ?? 0) > 0).toList();
+
+    final List<PieChartSectionData> sections = List.generate(
+      chartMoodKeys.length,
+      (i) {
+        final moodName = chartMoodKeys[i];
+        final isTouched = moodName == _selectedMoodLabel;
+        final radius = isTouched ? 35.0 : 25.0;
+        final value = distribution[moodName]?.toDouble() ?? 0;
+
+        return PieChartSectionData(
+          color: _moodColorMap[moodName],
+          value: value,
+          title: '',
+          radius: radius,
+        );
+      },
     );
 
     return Container(
@@ -275,31 +394,55 @@ class _StatistikPageState extends State<StatistikPage> {
               children: [
                 PieChart(
                   PieChartData(
-                    pieTouchData: PieTouchData(enabled: false),
-                    sections: List.generate(_moodDistribution.length, (i) {
-                      final isTouched = i == _touchedIndex;
-                      final radius = isTouched ? 35.0 : 25.0;
-                      final moodName = moodKeys[i];
-                      final value = _moodDistribution[moodName]!;
+                    // --- PERUBAHAN UTAMA ADA DI SINI ---
+                    pieTouchData: PieTouchData(
+                      touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                        setState(() {
+                          // Hanya bereaksi jika gestur sentuhan sudah selesai (tap diangkat)
+                          if (event is FlTapUpEvent || event is FlPanEndEvent) {
+                            if (pieTouchResponse == null ||
+                                pieTouchResponse.touchedSection == null) {
+                              // Jika menekan area kosong, batalkan pilihan
+                              _selectedMoodLabel = null;
+                            } else {
+                              // Jika menekan segmen, terapkan logika toggle
+                              final touchedIndex =
+                                  pieTouchResponse
+                                      .touchedSection!
+                                      .touchedSectionIndex;
+                              final touchedMoodName =
+                                  chartMoodKeys[touchedIndex];
 
-                      return PieChartSectionData(
-                        color: _moodColorMap[moodName],
-                        value: value.toDouble(),
-                        title: '',
-                        radius: radius,
-                      );
-                    }),
-                    startDegreeOffset: -90,
+                              // Jika menekan yang sudah terpilih, batalkan. Jika baru, pilih.
+                              if (_selectedMoodLabel == touchedMoodName) {
+                                _selectedMoodLabel = null;
+                              } else {
+                                _selectedMoodLabel = touchedMoodName;
+                              }
+                            }
+                          }
+                        });
+                      },
+                    ),
+                    sections: sections,
+                    startDegreeOffset: 180,
                     centerSpaceRadius: 70,
                     sectionsSpace: 4,
                   ),
                 ),
-                // Teks di tengah akan tetap berfungsi seperti sebelumnya
+                // Teks di tengah (kode ini tidak perlu diubah, akan bekerja otomatis)
                 Builder(
                   builder: (context) {
-                    if (_touchedIndex == null || totalValue == 0) {
+                    final value =
+                        _selectedMoodLabel != null
+                            ? distribution[_selectedMoodLabel]
+                            : null;
+
+                    if (_selectedMoodLabel == null ||
+                        value == null ||
+                        totalValue == 0) {
                       return Text(
-                        'Presentase',
+                        'Sentuh Grafik',
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -308,8 +451,6 @@ class _StatistikPageState extends State<StatistikPage> {
                       );
                     }
 
-                    final moodName = moodKeys[_touchedIndex!];
-                    final value = _moodDistribution[moodName]!;
                     final percentage = (value / totalValue * 100)
                         .toStringAsFixed(0);
 
@@ -321,11 +462,11 @@ class _StatistikPageState extends State<StatistikPage> {
                           style: GoogleFonts.jua(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: _moodColorMap[moodName],
+                            color: _moodColorMap[_selectedMoodLabel!],
                           ),
                         ),
                         Text(
-                          moodName,
+                          _selectedMoodLabel!,
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -340,47 +481,47 @@ class _StatistikPageState extends State<StatistikPage> {
             ),
           ),
           const SizedBox(height: 24),
+          // Legenda Emoji (kode ini tidak perlu diubah)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             crossAxisAlignment: CrossAxisAlignment.end,
             children:
-                _emojiAssets.entries
-                    .map((entry) {
-                      final moodLabel = entry.key;
-                      final assetPath = entry.value;
+                orderedMoodKeys.map((moodLabel) {
+                  final assetPath = _emojiAssets[moodLabel]!;
+                  final count = distribution[moodLabel] ?? 0;
+                  final isSelected = _selectedMoodLabel == moodLabel;
 
-                      final currentIndex = moodKeys.indexOf(moodLabel);
-                      final isSelected = _touchedIndex == currentIndex;
-
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _touchedIndex = isSelected ? null : currentIndex;
-                          });
-                        },
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Opacity(
-                              opacity: isSelected ? 1.0 : 0.0,
-                              child: Text(
-                                '${_moodDistribution[moodLabel]} Hari',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  color: Colors.indigo.shade800,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedMoodLabel = isSelected ? null : moodLabel;
+                      });
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Opacity(
+                          opacity: isSelected ? 1.0 : 0.0,
+                          child: Text(
+                            '${count} Hari',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              color: Colors.indigo.shade800,
+                              fontWeight: FontWeight.bold,
                             ),
-                            const SizedBox(height: 6),
-                            Image.asset(assetPath, width: 50),
-                          ],
+                          ),
                         ),
-                      );
-                    })
-                    .toList()
-                    .reversed
-                    .toList(),
+                        const SizedBox(height: 6),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: isSelected ? 55 : 50,
+                          height: isSelected ? 55 : 50,
+                          child: Image.asset(assetPath),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
           ),
         ],
       ),
@@ -452,4 +593,32 @@ class _StatistikPageState extends State<StatistikPage> {
       );
     },
   );
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/IMG-08.png', height: 150),
+            const SizedBox(height: 16),
+            Text(
+              'Data Statistik Masih Kosong',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Isi catatan mood harianmu untuk melihat statistiknya di sini.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
