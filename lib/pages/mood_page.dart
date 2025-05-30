@@ -330,6 +330,7 @@ class _MoodPageState extends State<MoodPage> {
                       style: GoogleFonts.raleway(
                         fontSize: 12,
                         color: Colors.blueAccent,
+                        fontWeight: FontWeight.w600,
                       ),
                       textAlign: TextAlign.center,
                     ),

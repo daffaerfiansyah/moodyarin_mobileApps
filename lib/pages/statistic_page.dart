@@ -39,7 +39,6 @@ class _StatistikPageState extends State<StatistikPage> {
     'Sangat Sedih': 'assets/Emoji-1.png',
   };
 
-  // Color map for moods
   static const Map<String, Color> _moodColorMap = {
     'Sangat Baik': Color(0xFFFBBF24),
     'Baik': Color(0xFF34D399),
@@ -58,7 +57,7 @@ class _StatistikPageState extends State<StatistikPage> {
     if (!mounted) return;
     setState(() {
       _isLoading = true;
-      _selectedMoodLabel = null; // Reset interaksi saat data baru dimuat
+      _selectedMoodLabel = null;
     });
 
     final firstDay = DateTime(_currentDate.year, _currentDate.month, 1);
@@ -86,7 +85,6 @@ class _StatistikPageState extends State<StatistikPage> {
         setState(() {
           _isLoading = false;
         });
-        // Tampilkan pesan error jika gagal mengambil data
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Gagal memuat data: $error"),
@@ -129,7 +127,7 @@ class _StatistikPageState extends State<StatistikPage> {
   void _nextMonth() {
     setState(() {
       _currentDate = DateTime(_currentDate.year, _currentDate.month + 1);
-      _selectedMoodLabel = null; // Reset pilihan saat ganti bulan
+      _selectedMoodLabel = null;
     });
     _fetchAndProcessData();
   }
@@ -137,7 +135,7 @@ class _StatistikPageState extends State<StatistikPage> {
   void _previousMonth() {
     setState(() {
       _currentDate = DateTime(_currentDate.year, _currentDate.month - 1);
-      _selectedMoodLabel = null; // Reset pilihan saat ganti bulan
+      _selectedMoodLabel = null;
     });
     _fetchAndProcessData();
   }
@@ -171,7 +169,7 @@ class _StatistikPageState extends State<StatistikPage> {
                 child: Text(
                   formattedMonthYear,
                   style: GoogleFonts.jua(
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

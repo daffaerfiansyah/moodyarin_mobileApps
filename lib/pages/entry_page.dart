@@ -235,7 +235,7 @@ class _EntryPageState extends State<EntryPage> {
                 child: Text(
                   formattedMonthYear,
                   style: GoogleFonts.jua(
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

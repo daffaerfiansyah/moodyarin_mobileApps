@@ -3,10 +3,7 @@ import 'package:moodyarin/widgets/bottom_navigation.dart';
 import 'package:moodyarin/pages/entry_page.dart';
 import 'package:moodyarin/pages/mood_page.dart';
 import 'package:moodyarin/pages/statistic_page.dart';
-// Tambahkan halaman lain jika sudah tersedia
-// import 'package:moodyarin/pages/statistik_page.dart';
-// import 'package:moodyarin/pages/kalender_page.dart';
-// import 'package:moodyarin/pages/profil_page.dart';
+import 'package:moodyarin/pages/kalender_page.dart';
 
 class HomePage extends StatefulWidget {
   final int initialIndex;
@@ -29,7 +26,7 @@ class _HomePageState extends State<HomePage> {
     EntryPage(),
     StatistikPage(),
     MoodPage(),
-    Center(child: Text("Kalender")),
+    KalenderPage(),
     Center(child: Text("Profil")),
   ];
 
