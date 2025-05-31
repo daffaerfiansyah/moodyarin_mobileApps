@@ -4,6 +4,7 @@ import 'package:moodyarin/pages/entry_page.dart';
 import 'package:moodyarin/pages/mood_page.dart';
 import 'package:moodyarin/pages/statistic_page.dart';
 import 'package:moodyarin/pages/kalender_page.dart';
+import 'package:moodyarin/pages/profil_page.dart';
 
 class HomePage extends StatefulWidget {
   final int initialIndex;
@@ -27,7 +28,7 @@ class _HomePageState extends State<HomePage> {
     StatistikPage(),
     MoodPage(),
     KalenderPage(),
-    Center(child: Text("Profil")),
+    ProfilPage(),
   ];
 
   void _onNavTapped(int index) {

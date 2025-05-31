@@ -109,7 +109,7 @@ class _KalenderPageState extends State<KalenderPage> {
         color: Colors.white,
       ),
       borderRadius: BorderRadius.circular(12),
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(12),
       duration: const Duration(seconds: 3),
       flushbarPosition: FlushbarPosition.TOP,
     ).show(context);
@@ -163,6 +163,7 @@ class _KalenderPageState extends State<KalenderPage> {
     }
   }
 
+
   Future<void> _openMoodFormModal({
     MoodEntry? entry,
     required DateTime forDate,
@@ -181,12 +182,17 @@ class _KalenderPageState extends State<KalenderPage> {
 
     if (resultEntry != null) {
       _fetchMoodDataForMonth(_focusedDay);
-      showTopSnackbar(
-        entry == null
-            ? 'Mood berhasil ditambahkan!'
-            : 'Catatan berhasil diperbarui!',
-        isError: false,
-      );
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          showTopSnackbar(
+            entry == null
+                ? 'Mood berhasil ditambahkan!'
+                : 'Catatan berhasil diperbarui!',
+            isError: false,
+          );
+        }
+      });
     }
   }
 
@@ -229,7 +235,7 @@ class _KalenderPageState extends State<KalenderPage> {
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green.shade600,
-              foregroundColor: Colors.white, // Warna teks tombol
+              foregroundColor: Colors.white, 
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -252,11 +258,10 @@ class _KalenderPageState extends State<KalenderPage> {
           Center(
             child: Image.asset(
               _emojiAssets[entryToShow!.mood] ?? _emojiAssets['Biasa aja']!,
-              width: 50,
-              height: 50,
+              width: 60,
+              height: 60,
             ),
           ),
-          const SizedBox(height: 8),
           Center(
             child: Text(
               entryToShow.mood,
@@ -268,7 +273,7 @@ class _KalenderPageState extends State<KalenderPage> {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Divider(color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
@@ -295,7 +300,7 @@ class _KalenderPageState extends State<KalenderPage> {
                 ? entryToShow.note
                 : "- (Tidak ada catatan tambahan) -",
             style: GoogleFonts.poppins(fontSize: 15),
-            maxLines: 5,
+            maxLines: 6,
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -327,7 +332,7 @@ class _KalenderPageState extends State<KalenderPage> {
             ),
           ),
           onPressed: () {
-            Navigator.of(context).pop(); // Tutup dialog detail
+            Navigator.of(context).pop();
             _deleteEntryFromCalendar(entryToShow!.id, entryToShow.date);
           },
         ),
@@ -370,9 +375,8 @@ class _KalenderPageState extends State<KalenderPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    dialogContent, // Konten dinamis (detail atau pesan kosong + tombol tambah)
+                    dialogContent, 
                     if (dialogActions.isNotEmpty) ...[
-                      // Tampilkan footer aksi jika ada
                       const SizedBox(height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -478,243 +482,261 @@ class _KalenderPageState extends State<KalenderPage> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: LinearProgressIndicator(),
-            ),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            padding: const EdgeInsets.only(
-              bottom: 16,
-              left: 8,
-              right: 8,
-              top: 8,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.indigo.shade400,
-                  const Color.fromARGB(255, 75, 71, 188),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: LinearProgressIndicator(),
+              ),
+
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.only(
+                bottom: 16,
+                left: 8,
+                right: 8,
+                top: 8,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.indigo.shade400,
+                    const Color.fromARGB(255, 75, 71, 188),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.3),
+                    spreadRadius: 2,
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
-                  spreadRadius: 2,
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: TableCalendar<MoodEntry>(
-              locale: 'id_ID',
-              firstDay: DateTime.utc(2020, 1, 1),
-              lastDay: DateTime.utc(2030, 12, 31),
-              focusedDay: _focusedDay,
-              calendarFormat: _calendarFormat,
-              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-              startingDayOfWeek: StartingDayOfWeek.sunday,
-              daysOfWeekHeight: 40,
-              rowHeight: 80,
-              headerVisible: false,
-              availableGestures: AvailableGestures.none,
+              child: TableCalendar<MoodEntry>(
+                locale: 'id_ID',
+                firstDay: DateTime.utc(2020, 1, 1),
+                lastDay: DateTime.utc(2030, 12, 31),
+                focusedDay: _focusedDay,
+                calendarFormat: _calendarFormat,
+                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                eventLoader: _getEventsForDay,
+                startingDayOfWeek: StartingDayOfWeek.sunday,
+                daysOfWeekHeight: 40,
+                rowHeight: 80,
+                headerVisible: false,
+                availableGestures: AvailableGestures.none,
 
-              calendarStyle: CalendarStyle(
-                defaultDecoration: const BoxDecoration(),
-                weekendDecoration: const BoxDecoration(),
-                selectedDecoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
-                  shape: BoxShape.circle,
+                calendarStyle: CalendarStyle(
+                  defaultDecoration: const BoxDecoration(),
+                  weekendDecoration: const BoxDecoration(),
+                  selectedDecoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  todayDecoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  outsideTextStyle: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                  ),
                 ),
-                todayDecoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.5),
-                  shape: BoxShape.circle,
-                ),
-                outsideTextStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                ),
-              ),
+                
 
-              daysOfWeekStyle: DaysOfWeekStyle(
-                weekdayStyle: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                daysOfWeekStyle: DaysOfWeekStyle(
+                  weekdayStyle: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  weekendStyle: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                weekendStyle: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              calendarBuilders: CalendarBuilders(
-                prioritizedBuilder: (context, day, focusedDay) {
-                  final events = _getEventsForDay(day);
-                  bool isSelected = isSameDay(_selectedDay, day);
-                  bool isToday = isSameDay(day, DateTime.now());
-                  bool isOutside = day.month != focusedDay.month;
+                calendarBuilders: CalendarBuilders(
+                  markerBuilder: (
+                    BuildContext context,
+                    DateTime day,
+                    List<MoodEntry> events,
+                  ) {
+                    return const SizedBox.shrink();
+                  },
+                  prioritizedBuilder: (context, day, focusedDay) {
+                    final events = _getEventsForDay(day);
+                    bool isSelected = isSameDay(_selectedDay, day);
+                    bool isToday = isSameDay(day, DateTime.now());
+                    bool isOutside = day.month != focusedDay.month;
 
-                  Widget dayContentWidget;
-                  Widget? markerContentWidget;
-                  double outsideContentOpacity = 0.5;
+                    Widget dayContentWidget;
+                    Widget? markerContentWidget;
+                    double outsideContentOpacity = 0.5;
 
-                  if (isOutside) {
-                    dayContentWidget = Text(
-                      '${day.day}',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white.withOpacity(
-                          outsideContentOpacity * 0.8,
+                    if (isOutside) {
+                      dayContentWidget = Text(
+                        '${day.day}',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white.withOpacity(
+                            outsideContentOpacity * 0.8,
+                          ),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    );
-                    if (events.isNotEmpty) {
-                      final moodLabel = events.first.mood;
-                      final assetPath = _emojiAssets[moodLabel];
-                      if (assetPath != null) {
-                        markerContentWidget = Opacity(
-                          opacity: outsideContentOpacity,
-                          child: Image.asset(assetPath, width: 48, height: 48),
-                        );
+                      );
+                      if (events.isNotEmpty) {
+                        final moodLabel = events.first.mood;
+                        final assetPath = _emojiAssets[moodLabel];
+                        if (assetPath != null) {
+                          markerContentWidget = Opacity(
+                            opacity: outsideContentOpacity,
+                            child: Image.asset(
+                              assetPath,
+                              width: 48,
+                              height: 48,
+                            ),
+                          );
+                        } else {
+                          markerContentWidget = Opacity(
+                            opacity: outsideContentOpacity,
+                            child: Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.orange.withOpacity(
+                                  0.7 * outsideContentOpacity,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
                       } else {
                         markerContentWidget = Opacity(
                           opacity: outsideContentOpacity,
                           child: Container(
-                            width: 40,
-                            height: 40,
+                            width: 36,
+                            height: 36,
+                            margin: EdgeInsets.fromLTRB(0, 0, 0, 6),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.orange.withOpacity(
-                                0.7 * outsideContentOpacity,
+                              color: Colors.white.withOpacity(
+                                0.4 * outsideContentOpacity,
                               ),
                             ),
                           ),
                         );
                       }
                     } else {
-                      markerContentWidget = Opacity(
-                        opacity: outsideContentOpacity,
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(
-                              0.4 * outsideContentOpacity,
-                            ),
-                          ),
+                      Color dayNumberColor;
+                      if (isSelected) {
+                        dayNumberColor = Colors.deepPurple.shade700;
+                      } else if (isToday) {
+                        dayNumberColor = Colors.purple.shade600;
+                      } else {
+                        dayNumberColor = Colors.white.withOpacity(0.9);
+                      }
+                      dayContentWidget = Text(
+                        '${day.day}',
+                        style: GoogleFonts.poppins(
+                          color: dayNumberColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
                       );
-                    }
-                  } else {
-                    Color dayNumberColor;
-                    if (isSelected) {
-                      dayNumberColor = Colors.deepPurple.shade700;
-                    } else if (isToday) {
-                      dayNumberColor = Colors.purple.shade600;
-                    } else {
-                      dayNumberColor = Colors.white.withOpacity(0.9);
-                    }
-                    dayContentWidget = Text(
-                      '${day.day}',
-                      style: GoogleFonts.poppins(
-                        color: dayNumberColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    );
-                    if (events.isNotEmpty) {
-                      final moodLabel = events.first.mood;
-                      final assetPath = _emojiAssets[moodLabel];
-                      if (assetPath != null) {
-                        markerContentWidget = Image.asset(
-                          assetPath,
-                          width: 48,
-                          height: 48,
-                        );
+                      if (events.isNotEmpty) {
+                        final moodLabel = events.first.mood;
+                        final assetPath = _emojiAssets[moodLabel];
+                        if (assetPath != null) {
+                          markerContentWidget = Image.asset(
+                            assetPath,
+                            width: 48,
+                            height: 48,
+                          );
+                        } else {
+                          markerContentWidget = Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.orange.withOpacity(0.7),
+                            ),
+                          );
+                        }
                       } else {
                         markerContentWidget = Container(
-                          width: 40,
-                          height: 40,
+                          width: 35,
+                          height: 35,
+                          margin: EdgeInsets.fromLTRB(4, 6, 4, 6),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.orange.withOpacity(0.7),
+                            color: Colors.white.withOpacity(0.4),
                           ),
                         );
                       }
-                    } else {
-                      markerContentWidget = Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.4),
-                        ),
-                      );
                     }
-                  }
-
-                  BoxDecoration cellContainerDecoration = BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    color:
-                        isSelected
-                            ? Colors.white.withOpacity(0.3)
-                            : isToday && !isSelected
-                            ? Colors.white.withOpacity(0.15)
-                            : Colors.transparent,
-                  );
-
-                  return Container(
-                    margin: const EdgeInsets.all(1.0),
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    decoration: cellContainerDecoration,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (markerContentWidget != null) ...[
-                          markerContentWidget,
-                        ] else ...[
-                          const SizedBox(height: 48),
+                    BoxDecoration cellContainerDecoration = BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                      color:
+                          isSelected
+                              ? Colors.white.withOpacity(0.3)
+                              : isToday && !isSelected
+                              ? Colors.white.withOpacity(0.15)
+                              : Colors.transparent, 
+                    );
+                    return Container(
+                      margin: const EdgeInsets.all(1.0),
+                      padding: const EdgeInsets.symmetric(vertical: 3.0),
+                      decoration: cellContainerDecoration,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (markerContentWidget != null) ...[
+                            markerContentWidget,
+                          ] else ...[
+                            const SizedBox(
+                              height: 48,
+                            ),
+                          ],
+                          const SizedBox(height: 2),
+                          dayContentWidget,
                         ],
-                        const SizedBox(height: 2),
-                        dayContentWidget,
-                      ],
-                    ),
+                      ),
+                    );
+                  },
+                ),
+                onDaySelected: (selectedDay, focusedDay) {
+                  setState(() {
+                    _selectedDay = selectedDay;
+                    _focusedDay = DateTime(
+                      selectedDay.year,
+                      selectedDay.month,
+                      selectedDay.day,
+                    );
+                  });
+                  _showMoodDetails(
+                    context,
+                    _getEventsForDay(selectedDay),
+                    selectedDay,
                   );
                 },
+                onPageChanged: (focusedDay) {
+                  if (!isSameDay(_focusedDay, focusedDay)) {
+                    setState(() {
+                      _focusedDay = focusedDay;
+                    });
+                    _fetchMoodDataForMonth(focusedDay);
+                  }
+                },
               ),
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDay = selectedDay;
-                  _focusedDay = DateTime(
-                    selectedDay.year,
-                    selectedDay.month,
-                    selectedDay.day,
-                  );
-                });
-                _showMoodDetails(
-                  context,
-                  _getEventsForDay(selectedDay),
-                  selectedDay,
-                );
-              },
-              onPageChanged: (focusedDay) {
-                if (!isSameDay(_focusedDay, focusedDay)) {
-                  setState(() {
-                    _focusedDay = focusedDay;
-                  });
-                  _fetchMoodDataForMonth(focusedDay);
-                }
-              },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

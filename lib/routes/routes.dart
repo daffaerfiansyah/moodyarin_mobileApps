@@ -7,6 +7,7 @@ import 'package:moodyarin/widgets/login_screen.dart';
 import 'package:moodyarin/widgets/register_screen.dart';
 import 'package:moodyarin/pages/home_page.dart';
 import 'package:moodyarin/pages/entry_page.dart';
+import 'package:moodyarin/pages/edit_profil_page.dart';
 
 class AppRoutes {
   static const splash = '/';
@@ -17,6 +18,7 @@ class AppRoutes {
   static const homepage = '/home';
   static const entry = '/entry';
   static const mood = '/mood';
+  static const editProfil = '/edit-profil';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -57,6 +59,8 @@ class AppRoutes {
         );
       // case entry:
       //   return MaterialPageRoute(builder: (_) => const EntryPage());
+      case editProfil:
+        return MaterialPageRoute(builder: (_) => const EditProfilPage());
       default:
         return MaterialPageRoute(
           builder:
