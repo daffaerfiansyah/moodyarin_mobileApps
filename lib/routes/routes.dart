@@ -7,17 +7,23 @@ import 'package:moodyarin/widgets/login_screen.dart';
 import 'package:moodyarin/widgets/register_screen.dart';
 import 'package:moodyarin/pages/home_page.dart';
 import 'package:moodyarin/pages/entry_page.dart';
+import 'package:moodyarin/pages/profil_page.dart';
 import 'package:moodyarin/pages/edit_profil_page.dart';
+import 'package:moodyarin/widgets/forgot_password.dart';
+import 'package:moodyarin/widgets/reset_password.dart';
 
 class AppRoutes {
   static const splash = '/';
   static const welcome = '/welcome';
   static const introduction = '/intro';
   static const login = '/login';
+  static const forgotPassword = '/forgot';
+  static const resetPassword = '/reset';
   static const register = '/regist';
   static const homepage = '/home';
   static const entry = '/entry';
   static const mood = '/mood';
+  static const profil = '/profil-page';
   static const editProfil = '/edit-profil';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -61,6 +67,12 @@ class AppRoutes {
       //   return MaterialPageRoute(builder: (_) => const EntryPage());
       case editProfil:
         return MaterialPageRoute(builder: (_) => const EditProfilPage());
+      case forgotPassword:
+        return MaterialPageRoute(builder: (_) => const ForgotPasswordPage());
+      case resetPassword:
+        return MaterialPageRoute(builder: (_) => const ResetPasswordPage());
+      case profil:
+        return MaterialPageRoute(builder: (_) => const ProfilPage());
       default:
         return MaterialPageRoute(
           builder:

@@ -14,10 +14,10 @@ class ProfilPage extends StatefulWidget {
 class _ProfilPageState extends State<ProfilPage> {
   String _namaPengguna = "Memuat...";
   String _email = "Memuat...";
-  String _jenisKelamin = "Belum diatur"; // Default jika data belum ada
-  String _tanggalLahir = "Belum diatur"; // Default
-  String _telepon = "Belum diatur"; // Default
-  String? _fotoProfilUrl; // Default
+  String _jenisKelamin = "-"; 
+  String _tanggalLahir = "-"; 
+  String _telepon = "-";
+  String? _fotoProfilUrl; 
   bool _isLoading = true;
 
   @override
@@ -60,12 +60,11 @@ class _ProfilPageState extends State<ProfilPage> {
 
       if (mounted) {
         setState(() {
-          _namaPengguna = userDataResponse['full_name'] ?? "Nama Belum Diatur";
+          _namaPengguna = userDataResponse['full_name'] ?? "-";
           _fotoProfilUrl = userDataResponse['avatar_url'];
           print("URL Foto Profil dari DB di ProfilPage: ${_fotoProfilUrl}");
-          _jenisKelamin = userDataResponse['jenis_kelamin'] ?? "Belum diatur";
+          _jenisKelamin = userDataResponse['jenis_kelamin'] ?? "-";
 
-          // Format tanggal lahir jika ada
           if (userDataResponse['tanggal_lahir'] != null) {
             try {
               final date = DateTime.parse(
@@ -77,10 +76,9 @@ class _ProfilPageState extends State<ProfilPage> {
               _tanggalLahir = "Format salah";
             }
           } else {
-            _tanggalLahir = "Belum diatur";
+            _tanggalLahir = "-";
           }
-
-          _telepon = userDataResponse['telepon'] ?? "Belum diatur";
+          _telepon = userDataResponse['telepon'] ?? "-";
         });
       }
     } catch (e) {
@@ -91,9 +89,9 @@ class _ProfilPageState extends State<ProfilPage> {
               user.userMetadata?['full_name'] ??
               user.userMetadata?['name'] ??
               "Nama Belum Diatur";
-          _jenisKelamin = "Belum diatur";
-          _tanggalLahir = "Belum diatur";
-          _telepon = "Belum diatur";
+          _jenisKelamin = "-";
+          _tanggalLahir = "-";
+          _telepon = "-";
           _fotoProfilUrl = null;
         });
       }
@@ -106,13 +104,83 @@ class _ProfilPageState extends State<ProfilPage> {
     }
   }
 
+  Future<void> _signOut() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Konfirmasi Keluar',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin keluar dari akun Anda?',
+            style: GoogleFonts.poppins(),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Batal',
+                style: GoogleFonts.poppins(color: Colors.grey.shade700),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Keluar',
+                style: GoogleFonts.poppins(
+                  color: Colors.red.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      try {
+        if (mounted) {
+          setState(() {
+            _isLoading = true; // Tampilkan loading saat proses logout
+          });
+        }
+        await Supabase.instance.client.auth.signOut();
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.login,
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal log out: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text("Profil"),
-          backgroundColor: Colors.indigo.shade400,
+          title: const Text(""),
         ),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -123,37 +191,68 @@ class _ProfilPageState extends State<ProfilPage> {
         children: [
           _buildHeader(context, _namaPengguna, _fotoProfilUrl),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 20.0,
+            child: RefreshIndicator(
+              onRefresh: _fetchUserData,
+              color: Colors.indigo.shade600,
+              backgroundColor: Colors.white,
+              child: ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 20.0,
+                ),
+                children: [
+                  _buildInfoTile(
+                    icon: Icons.person_outline,
+                    label: "Jenis Kelamin",
+                    value: _jenisKelamin,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildInfoTile(
+                    icon: Icons.calendar_today_outlined,
+                    label: "Tanggal Lahir",
+                    value: _tanggalLahir,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildInfoTile(
+                    icon: Icons.email_outlined,
+                    label: "Email",
+                    value: _email,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildInfoTile(
+                    icon: Icons.phone_outlined,
+                    label: "Telepon",
+                    value: _telepon,
+                  ),
+                  const SizedBox(height: 12), // Beri jarak dari item terakhir
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                    ), // Padding agar tidak terlalu lebar
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.logout, color: Colors.white),
+                      label: Text(
+                        "Keluar Akun",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      onPressed: _signOut, // Panggil fungsi _signOut
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade400,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        elevation: 3,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              children: [
-                _buildInfoTile(
-                  icon: Icons.person_outline,
-                  label: "Jenis Kelamin",
-                  value: _jenisKelamin,
-                ),
-                const SizedBox(height: 16),
-                _buildInfoTile(
-                  icon: Icons.calendar_today_outlined,
-                  label: "Tanggal Lahir",
-                  value: _tanggalLahir,
-                ),
-                const SizedBox(height: 16),
-                _buildInfoTile(
-                  icon: Icons.email_outlined,
-                  label: "Email",
-                  value: _email,
-                ),
-                const SizedBox(height: 16),
-                _buildInfoTile(
-                  icon: Icons.phone_outlined,
-                  label: "Telepon",
-                  value: _telepon,
-                ),
-              ],
-            ),
+            )
           ),
         ],
       ),
@@ -173,8 +272,6 @@ class _ProfilPageState extends State<ProfilPage> {
       if (fotoProfilUrlFromState.startsWith('http')) {
         backgroundImageToShow = NetworkImage(fotoProfilUrlFromState);
       } else {
-        // Ini untuk kasus jika Anda menyimpan path aset lokal, jarang untuk foto profil dinamis
-        // backgroundImageToShow = AssetImage(fotoProfilUrlFromState);
         print(
           "Peringatan: _fotoProfilUrl tidak dimulai dengan http: $fotoProfilUrlFromState. Diasumsikan path aset, mungkin salah.",
         );
@@ -183,7 +280,7 @@ class _ProfilPageState extends State<ProfilPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(
-        top: 60.0,
+        top: 30.0,
         bottom: 30.0,
         left: 20.0,
         right: 20.0,
@@ -210,7 +307,7 @@ class _ProfilPageState extends State<ProfilPage> {
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
           CircleAvatar(
             radius: 50,
             backgroundColor: Colors.white.withOpacity(0.8),

@@ -24,9 +24,12 @@ class _LoginScreenState extends State<LoginScreen> {
     Flushbar(
       margin: const EdgeInsets.all(16),
       borderRadius: BorderRadius.circular(12),
-      backgroundColor: isError ? Colors.red.shade400 : Colors.green.shade300,
+      backgroundColor: isError ? Colors.red.shade400 : Colors.green.shade600,
+      icon: Icon(
+        isError ? Icons.info_outline : Icons.check_circle_outline,
+        color: Colors.white,
+      ),
       flushbarPosition: FlushbarPosition.TOP,
-      icon: const Icon(Icons.close, color: Colors.white),
       duration: const Duration(seconds: 3),
       messageText: Text(
         message,
@@ -50,7 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final response = await _authService.signIn(email, password);
 
-      // Jika login sukses
       if (response.session != null && response.user != null) {
         _showCustomSnackbar('Login berhasil!', isError: false);
 
@@ -59,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         await Future.delayed(
           const Duration(seconds: 2),
-        ); // beri waktu snackbar muncul
+        );
 
         if (mounted) {
           Navigator.pushNamedAndRemoveUntil(
@@ -69,11 +71,9 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        // Jika session atau user null, berarti login gagal
         _showCustomSnackbar('Email atau password salah.');
       }
     } catch (e) {
-      // Tangani jika ada exception dari Supabase
       _showCustomSnackbar('Gagal login: ${e.toString()}');
     }
 
@@ -182,6 +182,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(context, '/forgot');
+                      },
+                      child: Text(
+                        'lupa password?',
+                        style: GoogleFonts.rubik(
+                          color: Colors.blue,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
                   // Tombol Masuk
                   SizedBox(
                     width: double.infinity,

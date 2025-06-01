@@ -37,7 +37,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         style: const TextStyle(color: Colors.white, fontSize: 14),
       ),
       backgroundColor: isError ? Colors.red.shade400 : Colors.green.shade600,
-      icon: const Icon(Icons.info_outline, color: Colors.white),
+      icon: Icon(
+        isError ? Icons.info_outline : Icons.check_circle_outline,
+        color: Colors.white,
+      ),
       borderRadius: BorderRadius.circular(12),
       margin: const EdgeInsets.all(16),
       duration: const Duration(seconds: 3),

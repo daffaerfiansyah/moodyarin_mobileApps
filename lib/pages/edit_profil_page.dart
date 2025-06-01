@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart'; 
+import 'package:another_flushbar/flushbar.dart';
 import 'dart:io';
 
 class EditProfilPage extends StatefulWidget {
@@ -53,6 +54,38 @@ class _EditProfilPageState extends State<EditProfilPage> {
     super.dispose();
   }
 
+  void showTopSnackbar(
+    String message, {
+    bool isError = true,
+    Color? backgroundColor,
+  }) {
+    if (!mounted) return;
+    Flushbar(
+      messageText: Text(
+        message,
+        style: GoogleFonts.poppins(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      backgroundColor:
+          backgroundColor ??
+          (isError ? Colors.red.shade400 : Colors.green.shade600),
+      icon: Icon(
+        isError ? Icons.info_outline : Icons.check_circle_outline,
+        color: Colors.white,
+      ),
+      borderRadius: BorderRadius.circular(12),
+      margin: const EdgeInsets.all(16),
+      duration: const Duration(seconds: 3), // Durasi notifikasi tampil
+      flushbarPosition: FlushbarPosition.TOP,
+      animationDuration: const Duration(
+        milliseconds: 300,
+      ), // Durasi animasi muncul/hilang
+    ).show(context);
+  }
+
   Future<void> _fetchAndInitializeData() async {
     if (!mounted) return;
     setState(() {
@@ -63,18 +96,11 @@ class _EditProfilPageState extends State<EditProfilPage> {
     if (user == null) {
       setState(() {
         _isLoading = false;
-        // Handle jika tidak ada user, mungkin navigasi kembali atau tampilkan pesan
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Sesi pengguna tidak ditemukan."),
-            backgroundColor: Colors.red,
-          ),
-        );
       });
+      showTopSnackbar("Sesi pengguna tidak ditemukan.");
       return;
     }
 
-    // Email dari auth.users
     _emailController.text = user.email ?? "";
 
     try {
@@ -117,20 +143,13 @@ class _EditProfilPageState extends State<EditProfilPage> {
           _teleponController.text = userDataResponse['telepon'] ?? "";
         });
       } else if (mounted && userDataResponse == null) {
-        // Jika tidak ada data profil di tabel 'users', set nama dari metadata jika ada
         _namaController.text =
             user.userMetadata?['full_name'] ?? user.userMetadata?['name'] ?? '';
       }
     } catch (e) {
       print("Error fetching profile data: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Gagal memuat data profil: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
-        // Set nama dari metadata sebagai fallback jika query gagal
+        showTopSnackbar("Gagal memuat data profil: $e");
         _namaController.text =
             user.userMetadata?['full_name'] ?? user.userMetadata?['name'] ?? '';
       }
@@ -153,12 +172,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal memilih gambar: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showTopSnackbar("Gagal Memilih Gambar: $e");
       }
     }
   }
@@ -167,32 +181,19 @@ class _EditProfilPageState extends State<EditProfilPage> {
     try {
       final CroppedFile? croppedFile = await ImageCropper().cropImage(
         sourcePath: filePath,
-        // Mungkin beberapa versi lama tidak memiliki 'uiSettings' sebagai list,
-        // tapi parameter terpisah seperti 'androidUiSettings' dan 'iosUiSettings'.
-        // ATAU, beberapa parameter di dalam uiSettings yang saya berikan tidak ada.
-
-        // COBA HAPUS ATAU SESUAIKAN uiSettings INI TERLEBIH DAHULU JIKA ERROR MERUJUK KE SANA
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: 'Potong Gambar',
             toolbarColor: Colors.indigo.shade600,
             toolbarWidgetColor: Colors.white,
-            lockAspectRatio: true, // Coba dengan ini saja dulu
-            // initAspectRatio: CropAspectRatioPreset.square, // Mungkin ini tidak ada/berbeda
+            lockAspectRatio: true,
           ),
           IOSUiSettings(
             title: 'Potong Gambar',
-            aspectRatioLockEnabled: true, // Coba dengan ini saja dulu
-            // cropStyle: CropStyle.circle, // Mungkin ini tidak ada/berbeda di sini
-            // rectX, rectY, dll. mungkin tidak diperlukan jika hanya ingin crop lingkaran/persegi standar
+            aspectRatioLockEnabled: true,
           ),
         ],
-
-        // COBA HAPUS PARAMETER INI DULU JIKA ERROR MERUJUK KE SINI
-        // cropStyle: CropStyle.circle,
-        // aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-        // aspectRatioPresets: [CropAspectRatioPreset.square],
-        compressQuality: 70, // Ini biasanya aman
+        compressQuality: 70,
       );
 
       if (croppedFile != null) {
@@ -202,12 +203,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal memotong gambar: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showTopSnackbar("Gagal Memotong Gambar: $e");
       }
     }
   }
@@ -262,7 +258,6 @@ class _EditProfilPageState extends State<EditProfilPage> {
   }
 
   Future<void> _pilihJenisKelamin() async {
-    // Contoh menggunakan showDialog dengan RadioListTile
     String? pilihan = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
@@ -273,7 +268,6 @@ class _EditProfilPageState extends State<EditProfilPage> {
         return AlertDialog(
           title: Text('Pilih Jenis Kelamin', style: GoogleFonts.poppins()),
           content: StatefulBuilder(
-            // Untuk update UI di dalam dialog
             builder: (BuildContext context, StateSetter setStateDialog) {
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -318,18 +312,11 @@ class _EditProfilPageState extends State<EditProfilPage> {
     }
   }
 
-  // Di dalam kelas _EditProfilPageState
-
   Future<void> _simpanPerubahan() async {
     if (!mounted) return;
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Sesi pengguna tidak valid."),
-          backgroundColor: Colors.red,
-        ),
-      );
+      showTopSnackbar("Sesi Pengguna Tidak Valid!");
       return;
     }
 
@@ -337,22 +324,12 @@ class _EditProfilPageState extends State<EditProfilPage> {
       _isLoading = true;
     });
 
-    try {
-      String?
-      newAvatarUrl; // Variabel untuk menyimpan URL gambar baru dari Supabase Storage
-
-      // 1. PROSES UPLOAD GAMBAR JIKA ADA GAMBAR BARU YANG DIPILIH
+    try { String? newAvatarUrl;
       if (_newProfileImageFile != null) {
         final imageFile = _newProfileImageFile!;
-        // Buat nama file yang unik, misalnya menggunakan user ID dan timestamp
-        // atau biarkan Supabase yang membuat nama unik jika Anda tidak upsert.
-        // Ekstensi file juga penting.
         final fileExt = imageFile.path.split('.').last.toLowerCase();
         final fileName =
             '${user.id}/${DateTime.now().millisecondsSinceEpoch}.$fileExt';
-
-        // Upload ke Supabase Storage
-        // Ganti 'avatars' dengan nama bucket Anda
         await Supabase.instance.client.storage
             .from('avatars') // NAMA BUCKET ANDA
             .upload(
@@ -361,22 +338,16 @@ class _EditProfilPageState extends State<EditProfilPage> {
               fileOptions: const FileOptions(
                 cacheControl: '3600',
                 upsert: false,
-              ), // upsert: false agar error jika file sudah ada (atau true untuk menimpa)
+              ),
             );
-
-        // Dapatkan URL publik dari gambar yang baru diunggah
-        // Ganti 'avatars' dengan nama bucket Anda
         newAvatarUrl = Supabase.instance.client.storage
             .from('avatars') // NAMA BUCKET ANDA
             .getPublicUrl(fileName);
 
         print("Foto profil baru diunggah: $newAvatarUrl");
       }
-
-      // 2. Kumpulkan data yang akan diupdate ke tabel 'users'
       final Map<String, dynamic> dataToUpdate = {
         'full_name': _namaController.text,
-        // Jangan update email di sini kecuali Anda menangani alur verifikasi email baru Supabase
         'telepon': _teleponController.text,
         'jenis_kelamin':
             _displayJenisKelamin != "Pilih Jenis Kelamin"
@@ -386,24 +357,15 @@ class _EditProfilPageState extends State<EditProfilPage> {
           0,
           10,
         ),
-        // Jika ada gambar baru, gunakan URL baru. Jika tidak, jangan ubah avatar_url
-        // (atau set ke null jika ingin menghapus foto profil yang ada tanpa mengganti).
-        // Di sini kita hanya update jika ada newAvatarUrl.
         if (newAvatarUrl != null) 'avatar_url': newAvatarUrl,
       };
-
-      // Hapus field yang null atau placeholder agar tidak meng-overwrite data yang sudah ada dengan null
-      // Kecuali untuk avatar_url, karena newAvatarUrl sudah dicek.
-      // Jika Anda ingin bisa menghapus data (misal, menghapus nomor telepon), maka jangan remove key jika value-nya string kosong.
-      // Sesuaikan logika removeWhere ini dengan kebutuhan Anda.
       dataToUpdate.removeWhere((key, value) {
         if (key == 'avatar_url')
-          return false; // Jangan hapus avatar_url jika sudah ada di map
+          return false;
         return value == null ||
             (value is String && (value.isEmpty || value.startsWith("Pilih")));
       });
 
-      // Hanya update jika ada data yang akan diubah (selain avatar_url yang mungkin baru)
       if (dataToUpdate.isNotEmpty) {
         await Supabase.instance.client
             .from('users')
@@ -411,7 +373,6 @@ class _EditProfilPageState extends State<EditProfilPage> {
             .eq('id', user.id);
       }
 
-      // Penanganan perubahan password (sudah ada di kode Anda)
       if (_passwordController.text.isNotEmpty) {
         if (_passwordController.text != _konfirmasiPasswordController.text) {
           throw Exception("Password dan konfirmasi password tidak cocok.");
@@ -420,54 +381,38 @@ class _EditProfilPageState extends State<EditProfilPage> {
           UserAttributes(password: _passwordController.text),
         );
       }
-
-      // Penanganan perubahan email (sudah ada di kode Anda)
-      // Ingat bahwa mengubah email di Supabase Auth akan memicu email konfirmasi
-      // dan pengguna mungkin perlu login ulang atau emailnya belum langsung aktif.
       if (_emailController.text.isNotEmpty &&
           _emailController.text != user.email) {
         await Supabase.instance.client.auth.updateUser(
           UserAttributes(email: _emailController.text),
         );
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                "Instruksi perubahan email telah dikirim. Silakan cek email Anda.",
-              ),
-              backgroundColor: Colors.blue,
-            ),
+          showTopSnackbar(
+            "Instruksi perubahan email telah dikirim. Silakan cek email Anda.",
+            isError: false,
+            backgroundColor: Colors.blue.shade600,
           );
         }
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Profil berhasil diperbarui!"),
-            backgroundColor: Colors.green,
-          ),
-        );
-        // Set state foto profil URL yang baru agar UI header langsung update jika ada perubahan
+        showTopSnackbar("Profil berhasil diperbarui!", isError: false);
         if (newAvatarUrl != null) {
           setState(() {
             _fotoProfilUrl = newAvatarUrl;
             _newProfileImageFile =
-                null; // Reset file gambar baru setelah diunggah
+                null;
           });
         }
-        // Anda mungkin ingin pop halaman setelah berhasil, atau fetch ulang data
-        // Navigator.of(context).pop(true); // true untuk menandakan ada perubahan
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted) {
+          Navigator.of(context).pop(true); 
+        }
       }
     } catch (e) {
       print("Error saving profile: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Gagal menyimpan profil: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showTopSnackbar("Gagal menyimpan profil: ${e.toString()}");
       }
     } finally {
       if (mounted) {
