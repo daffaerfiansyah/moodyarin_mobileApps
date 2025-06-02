@@ -338,8 +338,6 @@ class _StatistikPageState extends State<StatistikPage> {
     );
   }
 
-  // Ganti seluruh fungsi _buildRadialGaugeCard Anda dengan versi ini.
-
   Widget _buildRadialGaugeCard(Map<String, int> distribution) {
     final orderedMoodKeys = [
       'Sangat Sedih',
@@ -392,18 +390,14 @@ class _StatistikPageState extends State<StatistikPage> {
               children: [
                 PieChart(
                   PieChartData(
-                    // --- PERUBAHAN UTAMA ADA DI SINI ---
                     pieTouchData: PieTouchData(
                       touchCallback: (FlTouchEvent event, pieTouchResponse) {
                         setState(() {
-                          // Hanya bereaksi jika gestur sentuhan sudah selesai (tap diangkat)
                           if (event is FlTapUpEvent || event is FlPanEndEvent) {
                             if (pieTouchResponse == null ||
                                 pieTouchResponse.touchedSection == null) {
-                              // Jika menekan area kosong, batalkan pilihan
                               _selectedMoodLabel = null;
                             } else {
-                              // Jika menekan segmen, terapkan logika toggle
                               final touchedIndex =
                                   pieTouchResponse
                                       .touchedSection!
@@ -411,7 +405,6 @@ class _StatistikPageState extends State<StatistikPage> {
                               final touchedMoodName =
                                   chartMoodKeys[touchedIndex];
 
-                              // Jika menekan yang sudah terpilih, batalkan. Jika baru, pilih.
                               if (_selectedMoodLabel == touchedMoodName) {
                                 _selectedMoodLabel = null;
                               } else {
@@ -428,7 +421,6 @@ class _StatistikPageState extends State<StatistikPage> {
                     sectionsSpace: 4,
                   ),
                 ),
-                // Teks di tengah (kode ini tidak perlu diubah, akan bekerja otomatis)
                 Builder(
                   builder: (context) {
                     final value =
@@ -555,7 +547,7 @@ class _StatistikPageState extends State<StatistikPage> {
 
   SideTitles _bottomTitles() => SideTitles(
     showTitles: true,
-    reservedSize: 30,
+    reservedSize: 30, 
     getTitlesWidget: (value, meta) {
       String text = '';
       switch (value.toInt()) {
@@ -580,17 +572,25 @@ class _StatistikPageState extends State<StatistikPage> {
         case 6:
           text = '31';
           break;
+        default:
+          return const SizedBox.shrink();
       }
-      return SideTitleWidget(
-        axisSide: meta.axisSide,
-        space: 4,
+
+      return Padding(
+        padding: const EdgeInsets.only(top: 4.0),
         child: Text(
           text,
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 10, 
+            color: Colors.black87,
+          ),
+          textAlign: TextAlign.center,
         ),
       );
     },
   );
+
 
   Widget _buildEmptyState() {
     return Center(

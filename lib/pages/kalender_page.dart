@@ -199,13 +199,12 @@ class _KalenderPageState extends State<KalenderPage> {
   void _showMoodDetails(
     BuildContext context,
     List<MoodEntry> entries,
-    DateTime day, // 'day' adalah tanggal yang dipilih pengguna di kalender
+    DateTime day,
   ) {
     bool isEmptyEntry = entries.isEmpty;
     MoodEntry? entryToShow = isEmptyEntry ? null : entries.first;
-    // Format judul dialog tetap sama
     String mainDialogTitle = DateFormat(
-      'EEEE, d MMMM yyyy', // Format tanggal yang lebih jelas untuk judul dialog
+      'EEEE, d MMMM yyyy',
       'id_ID',
     ).format(day);
 
@@ -213,7 +212,6 @@ class _KalenderPageState extends State<KalenderPage> {
     List<Widget> dialogActions = [];
 
     if (isEmptyEntry) {
-      // Normalisasi tanggal hari ini dan tanggal yang dipilih ke UTC tengah malam untuk perbandingan yang konsisten
       final DateTime now = DateTime.now();
       final DateTime todayNormalized = DateTime.utc(
         now.year,
@@ -229,34 +227,24 @@ class _KalenderPageState extends State<KalenderPage> {
       bool isFutureDate = selectedDayNormalized.isAfter(todayNormalized);
 
       if (isFutureDate) {
-        // Jika tanggal yang dipilih adalah di masa depan
         dialogContent = Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/IMG-08.png', // Atau gambar lain yang sesuai
+              'assets/IMG-08.png',
               height: 80,
             ),
             const SizedBox(height: 16),
             Text(
-              "Belum ada catatan untuk tanggal yang akan datang.",
+              "Belum ada catatan untuk hari yang akan datang.",
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(fontSize: 16),
             ),
+            const SizedBox(height: 20),
           ],
         );
-        dialogActions = [
-          TextButton(
-            child: Text(
-              "Tutup",
-              style: GoogleFonts.poppins(color: Colors.grey.shade700),
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ];
       } else {
-        // Jika tanggal yang dipilih adalah hari ini atau di masa lalu (logika yang sudah ada)
         dialogContent = Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -287,30 +275,17 @@ class _KalenderPageState extends State<KalenderPage> {
                 ),
               ),
               onPressed: () {
-                Navigator.of(context).pop(); // Tutup dialog saat ini
+                Navigator.of(context).pop();
                 _openMoodFormModal(
-                  // entry: null karena ini penambahan baru
-                  forDate: day, // Gunakan 'day' yang merupakan tanggal terpilih
+                  forDate: day,
                 );
               },
             ),
           ],
         );
-        // Actions bisa dikosongkan atau tambahkan tombol tutup jika perlu
-        dialogActions = [
-          TextButton(
-            child: Text(
-              "Tutup",
-              style: GoogleFonts.poppins(color: Colors.grey.shade700),
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ];
       }
     } else {
-      // Logika jika sudah ada entri (tidak berubah)
-      // Pastikan 'entryToShow' tidak null karena 'entries' tidak kosong
-      entryToShow = entries.first; // Ambil entri pertama jika ada beberapa
+      entryToShow = entries.first; 
       dialogContent = Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,7 +312,6 @@ class _KalenderPageState extends State<KalenderPage> {
           Divider(color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
-            // Menggunakan 'mainDialogTitle' yang sudah diformat di atas
             DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(entryToShow.date),
             style: GoogleFonts.poppins(
               fontSize: 16,
@@ -357,7 +331,7 @@ class _KalenderPageState extends State<KalenderPage> {
           Text(
             entryToShow.note.isNotEmpty
                 ? entryToShow.note
-                : "belum ada catatan",
+                : "Tidak ada catatan",
             style: GoogleFonts.poppins(
               fontSize: 15,
               color: Colors.grey.shade500,
@@ -381,7 +355,7 @@ class _KalenderPageState extends State<KalenderPage> {
             _openMoodFormModal(
               entry: entryToShow,
               forDate:
-                  entryToShow!.date, // Gunakan tanggal dari entri saat edit
+                  entryToShow!.date, 
             );
           },
         ),
@@ -402,7 +376,6 @@ class _KalenderPageState extends State<KalenderPage> {
       ];
     }
 
-    // Tampilkan dialog (logika showDialog tetap sama)
     showDialog(
       context: context,
       builder: (context) {
@@ -419,13 +392,13 @@ class _KalenderPageState extends State<KalenderPage> {
                 padding: const EdgeInsets.only(
                   left: 20,
                   top:
-                      45, // Beri ruang untuk tombol close kustom jika ada di atas
+                      45, 
                   right: 20,
                   bottom: 20,
                 ),
                 margin: const EdgeInsets.only(
                   top: 15,
-                ), // Margin untuk efek "mengambang"
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.rectangle,
@@ -441,7 +414,7 @@ class _KalenderPageState extends State<KalenderPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    dialogContent, // Konten yang sudah ditentukan di atas
+                    dialogContent, 
                     if (dialogActions.isNotEmpty) ...[
                       const SizedBox(height: 24),
                       Row(
@@ -452,10 +425,9 @@ class _KalenderPageState extends State<KalenderPage> {
                   ],
                 ),
               ),
-              // Tombol Close kustom
               Positioned(
                 right: 0.0,
-                top: 0.0, // Posisi di atas margin container utama
+                top: 0.0, 
                 child: GestureDetector(
                   onTap: () {
                     Navigator.of(context).pop();
@@ -610,9 +582,7 @@ class _KalenderPageState extends State<KalenderPage> {
                   outsideTextStyle: TextStyle(
                     color: Colors.white.withOpacity(0.5),
                   ),
-                ),
-                
-
+                ),                
                 daysOfWeekStyle: DaysOfWeekStyle(
                   weekdayStyle: GoogleFonts.poppins(
                     color: Colors.white,
