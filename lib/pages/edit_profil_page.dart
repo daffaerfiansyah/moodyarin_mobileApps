@@ -305,12 +305,10 @@ class _EditProfilPageState extends State<EditProfilPage> {
       },
     );
 
-    if (pilihan != null) {
-      setState(() {
-        _displayJenisKelamin = pilihan;
-      });
+    setState(() {
+      _displayJenisKelamin = pilihan;
+    });
     }
-  }
 
   Future<void> _simpanPerubahan() async {
     if (!mounted) return;
