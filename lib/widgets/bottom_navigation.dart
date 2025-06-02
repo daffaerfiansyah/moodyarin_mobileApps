@@ -23,7 +23,7 @@ class CustomBottomNav extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildNavItem(
-              icon: Icons.toc_rounded, 
+              icon: Icons.format_list_bulleted_outlined, 
               label: 'Entri', 
               index: 0
             ),
@@ -32,7 +32,7 @@ class CustomBottomNav extends StatelessWidget {
               label: 'Statistik',
               index: 1,
             ),
-            const SizedBox(width: 40), // ruang untuk FAB
+            const SizedBox(width: 40),
             _buildNavItem(
               icon: Icons.calendar_month_rounded,
               label: 'Kalender',

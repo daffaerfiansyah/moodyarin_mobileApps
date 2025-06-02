@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart'; 
+import 'package:image_cropper/image_cropper.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'dart:io';
 
@@ -188,10 +188,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
             toolbarWidgetColor: Colors.white,
             lockAspectRatio: true,
           ),
-          IOSUiSettings(
-            title: 'Potong Gambar',
-            aspectRatioLockEnabled: true,
-          ),
+          IOSUiSettings(title: 'Potong Gambar', aspectRatioLockEnabled: true),
         ],
         compressQuality: 70,
       );
@@ -305,10 +302,12 @@ class _EditProfilPageState extends State<EditProfilPage> {
       },
     );
 
-    setState(() {
-      _displayJenisKelamin = pilihan;
-    });
+    if (pilihan != null) {
+      setState(() {
+        _displayJenisKelamin = pilihan;
+      });
     }
+  }
 
   Future<void> _simpanPerubahan() async {
     if (!mounted) return;
@@ -322,14 +321,15 @@ class _EditProfilPageState extends State<EditProfilPage> {
       _isLoading = true;
     });
 
-    try { String? newAvatarUrl;
+    try {
+      String? newAvatarUrl;
       if (_newProfileImageFile != null) {
         final imageFile = _newProfileImageFile!;
         final fileExt = imageFile.path.split('.').last.toLowerCase();
         final fileName =
             '${user.id}/${DateTime.now().millisecondsSinceEpoch}.$fileExt';
         await Supabase.instance.client.storage
-            .from('avatars')
+            .from('avatars') // NAMA BUCKET ANDA
             .upload(
               fileName,
               imageFile,
@@ -339,7 +339,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
               ),
             );
         newAvatarUrl = Supabase.instance.client.storage
-            .from('avatars')
+            .from('avatars') // NAMA BUCKET ANDA
             .getPublicUrl(fileName);
 
         print("Foto profil baru diunggah: $newAvatarUrl");
@@ -358,8 +358,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
         if (newAvatarUrl != null) 'avatar_url': newAvatarUrl,
       };
       dataToUpdate.removeWhere((key, value) {
-        if (key == 'avatar_url')
-          return false;
+        if (key == 'avatar_url') return false;
         return value == null ||
             (value is String && (value.isEmpty || value.startsWith("Pilih")));
       });
@@ -398,13 +397,12 @@ class _EditProfilPageState extends State<EditProfilPage> {
         if (newAvatarUrl != null) {
           setState(() {
             _fotoProfilUrl = newAvatarUrl;
-            _newProfileImageFile =
-                null;
+            _newProfileImageFile = null;
           });
         }
         await Future.delayed(const Duration(seconds: 1));
         if (mounted) {
-          Navigator.of(context).pop(true); 
+          Navigator.of(context).pop(true);
         }
       }
     } catch (e) {

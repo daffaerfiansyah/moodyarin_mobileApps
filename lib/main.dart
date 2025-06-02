@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:moodyarin/routes/routes.dart';
-import 'package:moodyarin/constant.dart'; 
+import 'package:moodyarin/constant.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'dart:async';
@@ -85,8 +85,6 @@ class _MyAppState extends State<MyApp> {
       },
     );
   }
-
-
 
   @override
   void dispose() {

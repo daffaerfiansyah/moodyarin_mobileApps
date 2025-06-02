@@ -199,12 +199,13 @@ class _KalenderPageState extends State<KalenderPage> {
   void _showMoodDetails(
     BuildContext context,
     List<MoodEntry> entries,
-    DateTime day,
+    DateTime day, // 'day' adalah tanggal yang dipilih pengguna di kalender
   ) {
     bool isEmptyEntry = entries.isEmpty;
     MoodEntry? entryToShow = isEmptyEntry ? null : entries.first;
+    // Format judul dialog tetap sama
     String mainDialogTitle = DateFormat(
-      'EEEE, d MMMM yyyy',
+      'EEEE, d MMMM yyyy', // Format tanggal yang lebih jelas untuk judul dialog
       'id_ID',
     ).format(day);
 
@@ -212,52 +213,111 @@ class _KalenderPageState extends State<KalenderPage> {
     List<Widget> dialogActions = [];
 
     if (isEmptyEntry) {
-      dialogContent = Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Image.asset(
-            'assets/IMG-08.png',
-            height: 80,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            "Belum ada catatan mood untuk tanggal ini.",
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(fontSize: 16),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.add_circle_outline),
-            label: Text(
-              "Tambah Catatan Mood",
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade600,
-              foregroundColor: Colors.white, 
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-              _openMoodFormModal(
-                forDate: day,
-              );
-            },
-          ),
-        ],
+      // Normalisasi tanggal hari ini dan tanggal yang dipilih ke UTC tengah malam untuk perbandingan yang konsisten
+      final DateTime now = DateTime.now();
+      final DateTime todayNormalized = DateTime.utc(
+        now.year,
+        now.month,
+        now.day,
       );
+      final DateTime selectedDayNormalized = DateTime.utc(
+        day.year,
+        day.month,
+        day.day,
+      );
+
+      bool isFutureDate = selectedDayNormalized.isAfter(todayNormalized);
+
+      if (isFutureDate) {
+        // Jika tanggal yang dipilih adalah di masa depan
+        dialogContent = Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/IMG-08.png', // Atau gambar lain yang sesuai
+              height: 80,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "Belum ada catatan untuk tanggal yang akan datang.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontSize: 16),
+            ),
+          ],
+        );
+        dialogActions = [
+          TextButton(
+            child: Text(
+              "Tutup",
+              style: GoogleFonts.poppins(color: Colors.grey.shade700),
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ];
+      } else {
+        // Jika tanggal yang dipilih adalah hari ini atau di masa lalu (logika yang sudah ada)
+        dialogContent = Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset('assets/IMG-08.png', height: 80),
+            const SizedBox(height: 16),
+            Text(
+              "Belum ada catatan mood untuk tanggal ini.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontSize: 16),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add_circle_outline),
+              label: Text(
+                "Tambah Catatan Mood",
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade600,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog saat ini
+                _openMoodFormModal(
+                  // entry: null karena ini penambahan baru
+                  forDate: day, // Gunakan 'day' yang merupakan tanggal terpilih
+                );
+              },
+            ),
+          ],
+        );
+        // Actions bisa dikosongkan atau tambahkan tombol tutup jika perlu
+        dialogActions = [
+          TextButton(
+            child: Text(
+              "Tutup",
+              style: GoogleFonts.poppins(color: Colors.grey.shade700),
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ];
+      }
     } else {
+      // Logika jika sudah ada entri (tidak berubah)
+      // Pastikan 'entryToShow' tidak null karena 'entries' tidak kosong
+      entryToShow = entries.first; // Ambil entri pertama jika ada beberapa
       dialogContent = Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
             child: Image.asset(
-              _emojiAssets[entryToShow!.mood] ?? _emojiAssets['Biasa aja']!,
+              _emojiAssets[entryToShow.mood] ?? _emojiAssets['Biasa aja']!,
               width: 60,
               height: 60,
             ),
@@ -277,15 +337,14 @@ class _KalenderPageState extends State<KalenderPage> {
           Divider(color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
-            mainDialogTitle,
+            // Menggunakan 'mainDialogTitle' yang sudah diformat di atas
+            DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(entryToShow.date),
             style: GoogleFonts.poppins(
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 12),
-
-          // Catatan
           Text(
             "Catatan:",
             style: GoogleFonts.poppins(
@@ -298,8 +357,11 @@ class _KalenderPageState extends State<KalenderPage> {
           Text(
             entryToShow.note.isNotEmpty
                 ? entryToShow.note
-                : "- (Tidak ada catatan tambahan) -",
-            style: GoogleFonts.poppins(fontSize: 15),
+                : "belum ada catatan",
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              color: Colors.grey.shade500,
+            ),
             maxLines: 6,
             overflow: TextOverflow.ellipsis,
           ),
@@ -318,8 +380,9 @@ class _KalenderPageState extends State<KalenderPage> {
             Navigator.of(context).pop();
             _openMoodFormModal(
               entry: entryToShow,
-              forDate: day,
-            ); 
+              forDate:
+                  entryToShow!.date, // Gunakan tanggal dari entri saat edit
+            );
           },
         ),
         const SizedBox(width: 8),
@@ -339,6 +402,7 @@ class _KalenderPageState extends State<KalenderPage> {
       ];
     }
 
+    // Tampilkan dialog (logika showDialog tetap sama)
     showDialog(
       context: context,
       builder: (context) {
@@ -351,15 +415,17 @@ class _KalenderPageState extends State<KalenderPage> {
           child: Stack(
             clipBehavior: Clip.none,
             children: <Widget>[
-              // Konten utama dialog
               Container(
                 padding: const EdgeInsets.only(
                   left: 20,
-                  top: 45,
+                  top:
+                      45, // Beri ruang untuk tombol close kustom jika ada di atas
                   right: 20,
                   bottom: 20,
-                ), // Padding disesuaikan
-                margin: const EdgeInsets.only(top: 15),
+                ),
+                margin: const EdgeInsets.only(
+                  top: 15,
+                ), // Margin untuk efek "mengambang"
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.rectangle,
@@ -375,7 +441,7 @@ class _KalenderPageState extends State<KalenderPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    dialogContent, 
+                    dialogContent, // Konten yang sudah ditentukan di atas
                     if (dialogActions.isNotEmpty) ...[
                       const SizedBox(height: 24),
                       Row(
@@ -386,10 +452,10 @@ class _KalenderPageState extends State<KalenderPage> {
                   ],
                 ),
               ),
+              // Tombol Close kustom
               Positioned(
                 right: 0.0,
-                top:
-                    0.0,
+                top: 0.0, // Posisi di atas margin container utama
                 child: GestureDetector(
                   onTap: () {
                     Navigator.of(context).pop();
@@ -399,9 +465,7 @@ class _KalenderPageState extends State<KalenderPage> {
                     decoration: BoxDecoration(
                       color: Colors.grey.shade200,
                       borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(
-                          16,
-                        ), // Sesuai dengan radius dialog
+                        topRight: Radius.circular(16),
                         bottomLeft: Radius.circular(12),
                       ),
                     ),

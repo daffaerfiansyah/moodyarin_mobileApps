@@ -19,8 +19,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  void showTopSnackbar(String message, {bool isError = true}) {
-    Flushbar(
+  Future<dynamic>? showTopSnackbar(String message, {bool isError = true}) {
+    // Tambahkan Future<dynamic>?
+    if (!mounted) return null; // Jika widget sudah tidak ada, kembalikan null
+    return Flushbar(
+      // Kembalikan Future dari .show(context)
       messageText: Text(
         message,
         style: const TextStyle(color: Colors.white, fontSize: 14),
@@ -51,12 +54,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       );
 
       if (mounted) {
-        showTopSnackbar('Password Berhasil Diperbarui', isError: false);
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.login,
-          (route) => false,
-        );
+        await showTopSnackbar('Password Berhasil Diperbarui', isError: false);
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.login,
+            (route) => false,
+          );
+        }
       }
     } on AuthException catch (e) {
       if (mounted) {
