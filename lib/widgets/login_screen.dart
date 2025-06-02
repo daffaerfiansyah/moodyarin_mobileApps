@@ -221,8 +221,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Daftar
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

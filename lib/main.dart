@@ -60,25 +60,21 @@ class _MyAppState extends State<MyApp> {
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) {
-              print(
-                "[MyApp] Batal navigasi: _MyAppState tidak mounted saat addPostFrameCallback.",
-              );
+              print("[MyApp] Batal navigasi: _MyAppState tidak mounted.");
               return;
             }
             if (navigatorKey.currentState != null) {
               print(
-                "[MyApp] navigatorKey.currentState SIAP. Melakukan navigasi ke ${AppRoutes.resetPassword}",
+                "[MyApp] navigatorKey SIAP. Navigasi ke ${AppRoutes.resetPassword} dengan pushNamedAndRemoveUntil (route => false).",
               );
               navigatorKey.currentState!.pushNamedAndRemoveUntil(
                 AppRoutes.resetPassword,
-                (route) => false,
+                (route) => false, // Ini akan menghapus SEMUA rute sebelumnya
               );
-              print(
-                "[MyApp] Navigasi ke ResetPasswordPage TELAH DIPANGGIL via GlobalKey.",
-              );
+              print("[MyApp] Navigasi ke ResetPasswordPage TELAH DIPANGGIL.");
             } else {
               print(
-                "[MyApp] GAGAL NAVIGASI: navigatorKey.currentState adalah null. MaterialApp mungkin belum sepenuhnya siap atau GlobalKey tidak terpasang dengan benar.",
+                "[MyApp] GAGAL NAVIGASI GLOBAL: navigatorKey.currentState adalah null.",
               );
             }
           });
@@ -90,6 +86,8 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
+
+
   @override
   void dispose() {
     _authStateSubscription.cancel();
@@ -100,7 +98,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
-      title: 'MoodyAhrin',
+      title: 'MoodyarIn',
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

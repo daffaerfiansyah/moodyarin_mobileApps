@@ -119,10 +119,23 @@ class _SplashScreenState extends State<SplashScreen> {
                         if (dragValue > screenWidth * 0.6) {
                           setState(() => isDraggingComplete = true);
                           Future.delayed(const Duration(milliseconds: 600), () {
-                            Navigator.pushReplacementNamed(
-                              context,
-                              _shouldGoTo,
-                            );
+                            if (mounted) {
+                              // Selalu cek mounted
+                              // Tambahkan pengecekan untuk melihat apakah kita sudah di halaman reset password
+                              // Ini cara sederhana, mungkin perlu disesuaikan jika rute Anda kompleks
+                              final currentRouteName =
+                                  ModalRoute.of(context)?.settings.name;
+                              if (currentRouteName != AppRoutes.resetPassword) {
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  _shouldGoTo,
+                                );
+                              } else {
+                                print(
+                                  "SplashScreen: Navigasi normal dibatalkan karena sudah di halaman reset password.",
+                                );
+                              }
+                            }
                           });
                         } else {
                           setState(() {

@@ -331,7 +331,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
         final fileName =
             '${user.id}/${DateTime.now().millisecondsSinceEpoch}.$fileExt';
         await Supabase.instance.client.storage
-            .from('avatars') // NAMA BUCKET ANDA
+            .from('avatars')
             .upload(
               fileName,
               imageFile,
@@ -341,7 +341,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
               ),
             );
         newAvatarUrl = Supabase.instance.client.storage
-            .from('avatars') // NAMA BUCKET ANDA
+            .from('avatars')
             .getPublicUrl(fileName);
 
         print("Foto profil baru diunggah: $newAvatarUrl");

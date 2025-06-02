@@ -13,6 +13,7 @@ class CustomBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
+      color: const Color.fromARGB(255, 239, 249, 254),
       shape: const CircularNotchedRectangle(),
       notchMargin: 6.0,
       elevation: 10,
@@ -22,7 +23,7 @@ class CustomBottomNav extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildNavItem(
-              icon: Icons.book_rounded, 
+              icon: Icons.toc_rounded, 
               label: 'Entri', 
               index: 0
             ),

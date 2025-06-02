@@ -49,8 +49,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
       if (mounted) {
         showTopSnackbar(
-          'Tautan reset password telah dikirim ke email Anda. Silakan periksa kotak masuk (dan folder spam).',
-        );
+          'Tautan reset password telah dikirim ke email Anda. Silakan periksa kotak masuk (dan folder spam).', isError: false);
         // Opsional: Navigasi kembali atau ke halaman login
         // Navigator.of(context).pop();
       }

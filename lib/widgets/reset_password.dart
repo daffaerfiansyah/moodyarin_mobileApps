@@ -51,7 +51,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       );
 
       if (mounted) {
-        showTopSnackbar('Password Berhasil Diperbarui');
+        showTopSnackbar('Password Berhasil Diperbarui', isError: false);
         Navigator.pushNamedAndRemoveUntil(
           context,
           AppRoutes.login,
